@@ -178,6 +178,23 @@ def test_duplicate_email_conflict(client):
     assert dup.json()["error"]["code"] == "EMAIL_IN_USE"
 
 
+def test_validation_errors_name_the_field_without_leaking_values(client):
+    response = client.post(
+        "/auth/register",
+        json={
+            "email": "v@corp.test",
+            "password": "short",
+            "display_name": "Ada",
+            "organization_name": "Corp",
+        },
+    )
+    assert response.status_code == 422
+    envelope = response.json()["error"]
+    assert envelope["code"] == "VALIDATION_ERROR"
+    assert envelope["details"]["fields"] == [{"field": "password", "issue": "string_too_short"}]
+    assert '"short"' not in response.text  # never echo submitted values back
+
+
 def test_unauthenticated_and_invalid_session(client):
     assert client.get("/auth/me").json()["error"]["code"] == "AUTH_UNAUTHENTICATED"
     register(client)

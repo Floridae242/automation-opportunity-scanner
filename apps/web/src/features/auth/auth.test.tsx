@@ -97,6 +97,55 @@ describe("login form", () => {
     expect(nav.replace).not.toHaveBeenCalled();
   });
 
+  it("names the offending field when the API returns validation details", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        json: async () => ({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "The request body is invalid.",
+            request_id: "r1",
+            details: {
+              fields: [{ field: "password", issue: "string_too_short" }],
+            },
+          },
+        }),
+      }),
+    );
+    render(<LoginForm />);
+    await userEvent.click(screen.getByRole("tab", { name: "Create account" }));
+    await userEvent.type(screen.getByLabelText("Email"), "ada@corp.test");
+    await userEvent.type(screen.getByLabelText("Password"), "strong-pass-123");
+    await userEvent.type(screen.getByLabelText("Your name"), "Ada");
+    await userEvent.type(screen.getByLabelText("Organization name"), "Corp");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Create organization" }),
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Password is too short.",
+    );
+  });
+
+  it("blocks a short password before any network call", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<LoginForm />);
+    await userEvent.click(screen.getByRole("tab", { name: "Create account" }));
+    await userEvent.type(screen.getByLabelText("Email"), "ada@corp.test");
+    await userEvent.type(screen.getByLabelText("Password"), "short123");
+    await userEvent.type(screen.getByLabelText("Your name"), "Ada");
+    await userEvent.type(screen.getByLabelText("Organization name"), "Corp");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Create organization" }),
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "at least 10 characters",
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("asks for organization details when creating an account", async () => {
     render(<LoginForm />);
     await userEvent.click(screen.getByRole("tab", { name: "Create account" }));

@@ -36,7 +36,17 @@ def install_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(RequestValidationError)
     def invalid(request: Request, exc: RequestValidationError) -> JSONResponse:
+        fields = []
+        for item in exc.errors():
+            location = item.get("loc") or ()
+            field = location[-1] if location else "body"
+            fields.append({"field": str(field), "issue": str(item.get("type", "invalid"))})
         return JSONResponse(
-            error_body("VALIDATION_ERROR", "The request body is invalid.", request_id(request), {}),
+            error_body(
+                "VALIDATION_ERROR",
+                "The request body is invalid.",
+                request_id(request),
+                {"fields": fields},
+            ),
             status_code=422,
         )

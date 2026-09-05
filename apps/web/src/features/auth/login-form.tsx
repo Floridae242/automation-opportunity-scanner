@@ -5,6 +5,42 @@ import { useState, type FormEvent } from "react";
 
 type Mode = "signin" | "register";
 
+const FIELD_LABELS: Record<string, string> = {
+  password: "Password",
+  email: "Email",
+  display_name: "Your name",
+  organization_name: "Organization name",
+  body: "the request",
+};
+
+function validationMessage(body: unknown): string | null {
+  if (typeof body !== "object" || body === null) return null;
+  const error = (body as Record<string, unknown>).error;
+  if (typeof error !== "object" || error === null) return null;
+  const details = (error as Record<string, unknown>).details;
+  const fields =
+    typeof details === "object" && details !== null
+      ? (details as Record<string, unknown>).fields
+      : null;
+  if (Array.isArray(fields) && fields.length > 0) {
+    const parts = fields.map((entry) => {
+      const item = (
+        typeof entry === "object" && entry !== null ? entry : {}
+      ) as Record<string, unknown>;
+      const label = FIELD_LABELS[String(item.field ?? "")] ?? "A field";
+      const issue = String(item.issue ?? "invalid");
+      if (issue.includes("too_short")) return `${label} is too short`;
+      if (issue.includes("too_long")) return `${label} is too long`;
+      if (issue.includes("missing") || issue.includes("input"))
+        return `${label} is required`;
+      return `${label} is invalid`;
+    });
+    return `${parts.join("; ")}.`;
+  }
+  const message = (error as Record<string, unknown>).message;
+  return typeof message === "string" ? message : null;
+}
+
 export function LoginForm() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("signin");
@@ -17,6 +53,10 @@ export function LoginForm() {
     setError(null);
     const form = new FormData(event.currentTarget);
     const payload = Object.fromEntries(form.entries());
+    if (mode === "register" && String(payload.password ?? "").length < 10) {
+      setError("Password must be at least 10 characters.");
+      return;
+    }
     try {
       const response = await fetch(
         `/api/auth/${mode === "signin" ? "login" : "register"}`,
@@ -29,7 +69,7 @@ export function LoginForm() {
       if (!response.ok) {
         const body = await response.json().catch(() => null);
         setError(
-          body?.error?.message ??
+          validationMessage(body) ??
             "We could not reach the identity service. Try again.",
         );
         return;

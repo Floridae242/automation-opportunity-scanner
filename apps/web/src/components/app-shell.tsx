@@ -14,6 +14,11 @@ const navigation = [
   { href: "/status", label: "Workspace status", icon: "pulse" },
 ] as const;
 
+const PAGE_LABELS: Record<string, string> = {
+  ...Object.fromEntries(navigation.map((item) => [item.href, item.label])),
+  "/login": "Sign in",
+};
+
 export function AccountMenu({ session }: { session: AuthSession }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -59,6 +64,18 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const current = navigation.find((item) => item.href === pathname);
+  const section =
+    pathname === "/projects"
+      ? "Projects"
+      : pathname.startsWith("/projects/")
+        ? "Project detail"
+        : pathname.startsWith("/processes/")
+          ? "Process intake"
+          : pathname.startsWith("/analyses/")
+            ? "Opportunity analysis"
+            : pathname.startsWith("/opportunities/")
+              ? "Opportunity detail"
+              : (PAGE_LABELS[pathname] ?? "Page not found");
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">
@@ -124,7 +141,7 @@ export function AppShell({
         <header className="topbar">
           <div className="breadcrumb">
             Workspace<span aria-hidden="true">/</span>
-            <strong>{current?.label ?? "Page not found"}</strong>
+            <strong>{section}</strong>
           </div>
           {session ? (
             <AccountMenu session={session} />
