@@ -68,7 +68,10 @@ class DemoExtractionProvider:
     model_id = "aos-demo-extract-v1"
 
     def extract(self, prompt: str, source: str) -> dict[str, object]:
-        sentences = [m.group(0).strip() for m in _SENTENCE.finditer(source) if m.group(0).strip()]
+        narrative = source.split("\nRecorded metrics:")[0]
+        sentences = [
+            m.group(0).strip() for m in _SENTENCE.finditer(narrative) if m.group(0).strip()
+        ]
         if not sentences:
             raise ExtractionError("AI_SCHEMA_INVALID")
         steps = [

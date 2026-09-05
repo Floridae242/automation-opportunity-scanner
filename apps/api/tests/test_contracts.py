@@ -27,6 +27,8 @@ def test_m3_openapi_contract():
         "/analyses/{analysisId}",
         "/process-versions/{versionId}",
         "/process-versions/{versionId}/review",
+        "/analyses/{analysisId}/opportunities",
+        "/opportunities/{opportunityId}",
     }
 
 

@@ -40,6 +40,7 @@ const detail = {
       confidence: "medium",
     },
   ],
+  systems: [{ name: "SAP", integration_status: "unknown" as const }],
 };
 
 describe("version detail contract", () => {
@@ -140,6 +141,25 @@ describe("step review editor", () => {
     expect(JSON.parse(init.body).steps[0]).not.toHaveProperty(
       "duration_minutes",
     );
+  });
+
+  it("includes changed system integration evidence in the save payload", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({}) });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<StepReviewEditor version={detail as never} />);
+    await userEvent.selectOptions(
+      screen.getByLabelText("Integration status"),
+      "evidence of API",
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Save corrections" }),
+    );
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).systems).toEqual([
+      { name: "SAP", integration_status: "evidence_of_api" },
+    ]);
   });
 
   it("marks a reviewed version read-only", () => {

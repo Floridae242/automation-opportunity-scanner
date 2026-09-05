@@ -5,6 +5,7 @@ import { fetchWorkspaceJson } from "@/features/intake/workspace-data";
 import { IntakeForm } from "@/features/intake/intake-form";
 import { ExtractionPanel } from "@/features/intake/extraction-panel";
 import { StepReviewEditor } from "@/features/intake/step-review";
+import { OpportunityAnalyzer } from "@/features/portfolio/opportunity-analyzer";
 import { readServerSession } from "@/features/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -68,6 +69,9 @@ export default async function ProcessPage({
       ) : latestDraft !== null ? (
         <ExtractionPanel processId={process.id} />
       ) : null}
+      {process.latest_version?.review_status === "reviewed" && (
+        <OpportunityAnalyzer processId={process.id} />
+      )}
       <section aria-label="Version history" className="workflow-section">
         <h2 className="quiet-label">DRAFT HISTORY</h2>
         {process.versions.length === 0 ? (

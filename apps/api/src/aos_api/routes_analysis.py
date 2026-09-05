@@ -3,6 +3,7 @@
 import json
 import uuid
 from datetime import UTC, datetime
+from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from pydantic import BaseModel, ConfigDict, Field
@@ -211,6 +212,11 @@ def start_analysis(
     )
     if latest is None:
         raise ApiError(409, "NOTHING_TO_EXTRACT", "Save an intake draft before running extraction.")
+    if latest.review_status == "reviewed":
+        from aos_api.opportunity_engine import run_opportunity_analysis
+
+        run = run_opportunity_analysis(db, org_id, context.user.id, latest)
+        return {"analysis_id": str(run.id), "status": run.status}
     key = request.headers.get("idempotency-key") or None
     if key:
         existing = db.scalar(
@@ -247,6 +253,43 @@ def start_analysis(
     return {"analysis_id": str(run.id), "status": "queued"}
 
 
+@analyses_router.get("/analyses/{analysisId}/opportunities")
+def list_analysis_opportunities(
+    analysisId: uuid.UUID,
+    org_id: uuid.UUID = Depends(tenant_context),
+    db: Session = Depends(db_session),
+) -> list[dict[str, object]]:
+    from aos_api.models import Opportunity, OpportunityScore
+
+    run = get_owned(db, AnalysisRun, org_id, analysisId)
+    rows = db.scalars(
+        select(Opportunity).where(
+            Opportunity.analysis_run_id == run.id, Opportunity.organization_id == org_id
+        )
+    )
+    output = []
+    for opportunity in rows:
+        score = db.scalar(
+            select(OpportunityScore).where(OpportunityScore.opportunity_id == opportunity.id)
+        )
+        scope = opportunity.scope_json if isinstance(opportunity.scope_json, dict) else {}
+        output.append(
+            {
+                "id": str(opportunity.id),
+                "title": opportunity.title,
+                "status": opportunity.status,
+                "result_state": opportunity.result_state,
+                "confidence": opportunity.confidence,
+                "priority_band": scope.get("priority_band"),
+                "total_score": score.total_score if score else None,
+                "scoring_version": score.scoring_version if score else None,
+                "axes": scope.get("axes"),
+                "governance_review": scope.get("governance_review", False),
+            }
+        )
+    return output
+
+
 @analyses_router.get("/analyses/{analysisId}")
 def read_analysis(
     analysisId: uuid.UUID,
@@ -260,9 +303,23 @@ def read_analysis(
             ProcessVersion.source_summary == DRAFT_SUMMARY.format(analysis_id=run.id),
         )
     )
+    from aos_api.models import PainPoint
+
+    pain_points = [
+        {
+            "category": point.category,
+            "description": point.description,
+            "severity": point.severity,
+            "confidence": point.confidence,
+            "evidence_refs": point.evidence_json,
+        }
+        for point in db.scalars(select(PainPoint).where(PainPoint.analysis_run_id == run.id))
+    ]
     return {
         "analysis_id": str(run.id),
         "status": run.status,
+        "task": run.task,
+        "pain_points": pain_points,
         "provider": run.provider,
         "model_id": run.model_id,
         "prompt_version": run.prompt_version,
@@ -270,6 +327,14 @@ def read_analysis(
         "error_code": run.error_code,
         "draft_version_id": str(draft_id) if draft_id else None,
     }
+
+
+class SystemPatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(min_length=1, max_length=200)
+    integration_status: Literal[
+        "unknown", "evidence_of_api", "no_practical_api", "manual_only", "mixed"
+    ] = "unknown"
 
 
 class StepPatch(BaseModel):
@@ -286,6 +351,7 @@ class StepPatch(BaseModel):
 class DraftEdit(BaseModel):
     model_config = ConfigDict(extra="forbid")
     steps: list[StepPatch] = Field(min_length=1)
+    systems: list[SystemPatch] | None = None
 
 
 def _get_draft(db: Session, org_id: uuid.UUID, version_id: uuid.UUID) -> ProcessVersion:
@@ -349,6 +415,10 @@ def read_version(
             {"source_ref": item.source_ref, "excerpt": item.excerpt, "confidence": item.confidence}
             for item in evidence
         ],
+        "systems": [
+            {"name": item.name, "integration_status": item.integration_status}
+            for item in db.scalars(select(System).where(System.process_version_id == version.id))
+        ],
     }
 
 
@@ -391,6 +461,24 @@ def edit_draft_version(
                 if patch.system
                 else None
             )
+    if body.systems is not None:
+        existing = {
+            row.name: row
+            for row in db.scalars(select(System).where(System.process_version_id == version.id))
+        }
+        for sys_patch in body.systems:
+            row = existing.get(sys_patch.name)
+            if row is None:
+                row = System(
+                    id=uuid.uuid4(),
+                    organization_id=org_id,
+                    process_version_id=version.id,
+                    name=sys_patch.name,
+                    integration_status=sys_patch.integration_status,
+                )
+                db.add(row)
+            else:
+                row.integration_status = sys_patch.integration_status
     audit(
         db,
         "process_version.draft_edited",
@@ -463,3 +551,43 @@ def mark_reviewed(
     )
     db.commit()
     return {"version_id": str(version.id), "review_status": "reviewed", "step_count": step_count}
+
+
+opportunities_router = APIRouter(tags=["opportunities"])
+
+
+@opportunities_router.get("/opportunities/{opportunityId}")
+def read_opportunity(
+    opportunityId: uuid.UUID,
+    org_id: uuid.UUID = Depends(tenant_context),
+    db: Session = Depends(db_session),
+) -> dict[str, object]:
+    from aos_api.models import Opportunity, OpportunityScore
+
+    opportunity = get_owned(db, Opportunity, org_id, opportunityId)
+    score = db.scalar(
+        select(OpportunityScore)
+        .where(OpportunityScore.opportunity_id == opportunity.id)
+        .order_by(OpportunityScore.created_at.desc())
+        .limit(1)
+    )
+    if score is None:
+        raise ApiError(404, "NOT_FOUND", "The requested resource was not found.")
+    dimensions = score.dimension_json if isinstance(score.dimension_json, dict) else {}
+    return {
+        "id": str(opportunity.id),
+        "analysis_run_id": str(opportunity.analysis_run_id),
+        "title": opportunity.title,
+        "status": opportunity.status,
+        "result_state": opportunity.result_state,
+        "confidence": opportunity.confidence,
+        "scope": opportunity.scope_json,
+        "score": {
+            "total": score.total_score,
+            "scoring_version": score.scoring_version,
+            "dimensions": dimensions.get("scores", {}),
+            "dimension_evidence": dimensions.get("evidence", {}),
+            "coverage": dimensions.get("coverage"),
+            "confidence_version": dimensions.get("confidence_version"),
+        },
+    }

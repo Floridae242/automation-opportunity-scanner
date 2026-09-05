@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     ai_base_url: str | None = Field(default=None, validation_alias="AI_BASE_URL")
     ai_api_key: SecretStr | None = Field(default=None, validation_alias="AI_API_KEY")
     ai_model: str | None = Field(default=None, validation_alias="AI_MODEL")
+    ai_timeout_seconds: float = Field(default=30.0, validation_alias="AI_TIMEOUT_SECONDS")
 
     @field_validator("database_url")
     @classmethod

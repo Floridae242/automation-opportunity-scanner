@@ -186,3 +186,43 @@ class ProcessStep(Base):
     manual: Mapped[bool | None] = mapped_column()
     duration_minutes: Mapped[float | None] = mapped_column(Float)
     data_json: Mapped[dict[str, object]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
+
+
+class PainPoint(Base):
+    __tablename__ = "pain_points"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
+    analysis_run_id: Mapped[UUID] = mapped_column(ForeignKey("analysis_runs.id"), index=True)
+    category: Mapped[str] = mapped_column(String(64))
+    description: Mapped[str] = mapped_column(Text)
+    severity: Mapped[str] = mapped_column(String(8))
+    confidence: Mapped[str] = mapped_column(String(8))
+    evidence_json: Mapped[list[object]] = mapped_column(JSONB, server_default=text("'[]'::jsonb"))
+
+
+class Opportunity(Base):
+    __tablename__ = "opportunities"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
+    analysis_run_id: Mapped[UUID] = mapped_column(ForeignKey("analysis_runs.id"), index=True)
+    title: Mapped[str] = mapped_column(String(300))
+    scope_json: Mapped[dict[str, object]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
+    confidence: Mapped[int] = mapped_column()
+    status: Mapped[str] = mapped_column(String(16), server_default=text("'candidate'"))
+    result_state: Mapped[str] = mapped_column(
+        String(24), server_default=text("'insufficient_evidence'")
+    )
+
+
+class OpportunityScore(Base):
+    __tablename__ = "opportunity_scores"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
+    opportunity_id: Mapped[UUID] = mapped_column(ForeignKey("opportunities.id"), index=True)
+    total_score: Mapped[float | None] = mapped_column(Float)
+    dimension_json: Mapped[dict[str, object]] = mapped_column(
+        JSONB, server_default=text("'{}'::jsonb")
+    )
+    confidence_score: Mapped[int] = mapped_column()
+    scoring_version: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

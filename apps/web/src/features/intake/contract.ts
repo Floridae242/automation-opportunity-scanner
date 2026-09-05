@@ -135,6 +135,24 @@ export type StepDetail = Readonly<{
   evidence_refs: readonly string[];
 }>;
 
+export type SystemDetail = Readonly<{
+  name: string;
+  integration_status:
+    | "unknown"
+    | "evidence_of_api"
+    | "no_practical_api"
+    | "manual_only"
+    | "mixed";
+}>;
+
+export const INTEGRATION_STATUSES = [
+  "unknown",
+  "evidence_of_api",
+  "no_practical_api",
+  "manual_only",
+  "mixed",
+] as const;
+
 export type VersionDetail = Readonly<{
   id: string;
   process_id: string;
@@ -147,6 +165,7 @@ export type VersionDetail = Readonly<{
     excerpt: string;
     confidence: string | null;
   }[];
+  systems: readonly SystemDetail[];
 }>;
 
 export function parseVersionDetail(value: unknown): VersionDetail | null {
@@ -161,8 +180,23 @@ export function parseVersionDetail(value: unknown): VersionDetail | null {
   )
     return null;
   if (typeof value.source_summary !== "string") return null;
-  if (!Array.isArray(value.steps) || !Array.isArray(value.evidence))
+  if (
+    !Array.isArray(value.steps) ||
+    !Array.isArray(value.evidence) ||
+    !Array.isArray(value.systems)
+  )
     return null;
+  for (const item of value.systems) {
+    if (
+      !isRecord(item) ||
+      typeof item.name !== "string" ||
+      typeof item.integration_status !== "string" ||
+      !(INTEGRATION_STATUSES as readonly string[]).includes(
+        item.integration_status,
+      )
+    )
+      return null;
+  }
   const steps: StepDetail[] = [];
   for (const item of value.steps) {
     if (!isRecord(item)) return null;

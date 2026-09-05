@@ -30,6 +30,11 @@ class IntakeMetrics(BaseModel):
     systems: list[str] | None = Field(default=None, max_length=50)
     approvals_required: int | None = Field(default=None, ge=0, le=999)
     sensitivity: Literal["low", "medium", "high", "restricted"] | None = None
+    strategic_alignment: float | None = Field(default=None, ge=0, le=100)
+    integration_complexity: float | None = Field(default=None, ge=0, le=100)
+    change_complexity: float | None = Field(default=None, ge=0, le=100)
+    security_compliance_effort: float | None = Field(default=None, ge=0, le=100)
+    exception_handling_complexity: float | None = Field(default=None, ge=0, le=100)
 
 
 class IntakeIn(BaseModel):

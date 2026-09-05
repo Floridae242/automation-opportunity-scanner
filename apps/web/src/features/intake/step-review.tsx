@@ -35,10 +35,20 @@ export function StepReviewEditor({ version }: { version: VersionDetail }) {
       if (manual === "no") patch.manual = false;
       return patch;
     });
+    const systemPatches = (version.systems ?? [])
+      .map((system) => {
+        const chosen = String(form.get(`system-status.${system.name}`) ?? "");
+        return chosen && chosen !== system.integration_status
+          ? { name: system.name, integration_status: chosen }
+          : null;
+      })
+      .filter((system) => system !== null);
+    const body: Record<string, unknown> = { steps };
+    if (systemPatches.length > 0) body.systems = systemPatches;
     const result = await callScannerApi(
       "PATCH",
       `process-versions/${version.id}`,
-      { steps },
+      body,
     );
     setPending(null);
     if (!result.ok) return setError(result.message);
@@ -144,6 +154,31 @@ export function StepReviewEditor({ version }: { version: VersionDetail }) {
           </li>
         ))}
       </ol>
+      {version.systems.length > 0 && (
+        <fieldset className="systems-block">
+          <legend>Systems and integration evidence</legend>
+          {version.systems.map((system) => (
+            <div key={system.name} className="system-row">
+              <span>{system.name}</span>
+              <label className="sr-only" htmlFor={`system-${system.name}`}>
+                Integration status
+              </label>
+              <select
+                id={`system-${system.name}`}
+                name={`system-status.${system.name}`}
+                defaultValue={system.integration_status}
+                disabled={reviewed}
+              >
+                <option value="unknown">unknown</option>
+                <option value="evidence_of_api">evidence of API</option>
+                <option value="no_practical_api">no practical API</option>
+                <option value="manual_only">manual only</option>
+                <option value="mixed">mixed</option>
+              </select>
+            </div>
+          ))}
+        </fieldset>
+      )}
       {version.evidence.length > 0 && (
         <p className="margin-note">
           Source: “{version.evidence[0].excerpt.slice(0, 120)}

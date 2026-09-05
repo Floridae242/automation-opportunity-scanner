@@ -976,6 +976,119 @@ main:focus {
   justify-content: flex-end;
 }
 
+/* ---------- portfolio / analysis ---------- */
+.matrix-grid {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 8px;
+}
+.matrix-axis-y {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  text-align: center;
+}
+.matrix-axis-x {
+  grid-column: 2;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.matrix-cells {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.matrix-cell {
+  aspect-ratio: 1.6;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  font-size: 11.5px;
+}
+.matrix-cell.filled {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.opportunity-score {
+  font-family: var(--font-display);
+  font-size: 34px;
+  color: var(--accent);
+}
+.evidence-chip.governance {
+  align-self: start;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.score-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13.5px;
+  min-width: 640px;
+}
+.score-table th,
+.score-table td {
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  padding: 9px 12px;
+  vertical-align: top;
+}
+.score-table th {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.score-table tfoot td {
+  font-weight: 650;
+  border-bottom: 0;
+}
+.evidence-cell {
+  color: var(--ink-soft);
+  font-size: 12.5px;
+}
+
+/* ---------- systems evidence ---------- */
+.systems-block {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.systems-block legend {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 650;
+}
+.system-row {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 10px;
+  align-items: center;
+}
+.system-row select {
+  font: inherit;
+  font-size: 13.5px;
+  padding: 7px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
 /* ---------- not found ---------- */
 .empty-icon-large {
   width: 64px;

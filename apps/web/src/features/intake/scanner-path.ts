@@ -2,9 +2,16 @@ const ALLOWED_ROOTS = new Set([
   "projects",
   "processes",
   "analyses",
+  "opportunities",
   "process-versions",
 ]);
-const ACTION_SEGMENTS = new Set(["processes", "intake", "analyses", "review"]);
+const ACTION_SEGMENTS = new Set([
+  "processes",
+  "intake",
+  "analyses",
+  "review",
+  "opportunities",
+]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function scopedScannerPath(segments: string[]): string | null {

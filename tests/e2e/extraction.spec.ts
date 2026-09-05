@@ -22,6 +22,10 @@ async function onboard(page) {
     .fill(
       "Support receives a change request. Agents validate the order in ERP and confirm by email.",
     );
+  await page.getByLabel("Frequency value").fill("20");
+  await page.getByLabel("Frequency period").selectOption("week");
+  await page.getByLabel("Error rate (0–1)").fill("0.08");
+  await page.getByLabel("Duration (minutes)").fill("55");
   await page.getByRole("button", { name: "Save intake draft" }).click();
   await expect(
     page.getByText("Intake saved as a new draft version."),
@@ -43,10 +47,7 @@ test("intake flows into AI draft extraction, correction, and human review", asyn
   await expect(page.getByText(/evidence: intake/).first()).toBeVisible();
 
   await stepOne.fill("Receive change request from support queue");
-  await page
-    .getByPlaceholder("Actor — not provided")
-    .first()
-    .fill("Support agent");
+  await page.locator("#actor-S1").fill("Support agent");
   await page.getByRole("button", { name: "Save corrections" }).click();
   await expect(stepOne).toHaveValue(
     "Receive change request from support queue",
@@ -69,5 +70,54 @@ test("source summary is preserved as intake history after extraction", async ({
   });
   await expect(
     page.getByText(/Source: “Support receives a change request/),
+  ).toBeVisible();
+});
+
+test("reviewed version scores into a final explained opportunity", async ({
+  page,
+}) => {
+  await onboard(page);
+  await page.getByRole("button", { name: "Run extraction" }).click();
+  await expect(page.getByLabel("Step S1 name")).toBeVisible({
+    timeout: 10_000,
+  });
+
+  await page.locator("#duration-S1").fill("20");
+  await page.locator("#duration-S2").fill("35");
+  await page.locator("#system-S1").fill("ERP");
+  await page.locator("#manual-S1").selectOption("yes");
+  await page.locator("#manual-S2").selectOption("yes");
+  await page.getByRole("button", { name: "Save corrections" }).click();
+  await expect(page.getByText("Systems and integration evidence")).toBeVisible({
+    timeout: 10_000,
+  });
+  await page
+    .locator("select[name='system-status.ERP']")
+    .selectOption("evidence_of_api");
+  await page.getByRole("button", { name: "Save corrections" }).click();
+  await page.getByRole("button", { name: "Mark reviewed" }).click();
+
+  await page.getByRole("button", { name: "Analyze opportunities" }).click();
+  await expect(page).toHaveURL(/\/analyses\/[0-9a-f-]+$/, { timeout: 10_000 });
+  await expect(page.getByText("PAIN POINTS")).toBeVisible();
+  await expect(page.getByText("repetitive manual work")).toBeVisible();
+  const opportunityLink = page.getByRole("link", {
+    name: "Automate repetitive manual steps",
+  });
+  await expect(opportunityLink).toBeVisible();
+  await expect(page.getByText(/· confidence/)).toBeVisible();
+  await expect(page.getByText(/final ·/)).toBeVisible();
+
+  await opportunityLink.click();
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "Automate repetitive manual steps",
+    }),
+  ).toBeVisible();
+  await expect(page.getByText("aos-score-v1").first()).toBeVisible();
+  await expect(page.getByText("weekly hours").first()).toBeVisible();
+  await expect(
+    page.getByText("Final score — all dimensions", { exact: false }),
   ).toBeVisible();
 });

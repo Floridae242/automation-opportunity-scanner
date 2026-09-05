@@ -118,12 +118,12 @@ paths:
         '200': { description: Reviewed }
   /analyses/{analysisId}/opportunities:
     get:
-      summary: List scored opportunities
+      summary: List scored opportunities with band, confidence, and matrix axes
       responses:
         '200': { description: OK }
   /opportunities/{opportunityId}:
     get:
-      summary: Get opportunity detail, score breakdown, recommendation, ROI scenarios
+      summary: Opportunity detail with per-dimension scores, evidence, and versioned score snapshot (ROI/recommendation added in M5)
       responses:
         '200': { description: OK }
   /analyses/{analysisId}/reports:
