@@ -1,0 +1,47 @@
+{
+  "scoring_version": "aos-score-v1",
+  "vectors": [
+    {
+      "name": "balanced",
+      "implementation_risk": 30,
+      "dimensions": {
+        "business_value": 80,
+        "time_saving": 75,
+        "repetitiveness": 90,
+        "feasibility": 70,
+        "error_reduction": 65,
+        "integration_ease": 60,
+        "risk_safety": 70
+      },
+      "expected_total": 74.5
+    },
+    {
+      "name": "high_risk",
+      "implementation_risk": 90,
+      "dimensions": {
+        "business_value": 90,
+        "time_saving": 90,
+        "repetitiveness": 90,
+        "feasibility": 50,
+        "error_reduction": 80,
+        "integration_ease": 40,
+        "risk_safety": 10
+      },
+      "expected_total": 70.0
+    },
+    {
+      "name": "low_value_easy",
+      "implementation_risk": 10,
+      "dimensions": {
+        "business_value": 25,
+        "time_saving": 30,
+        "repetitiveness": 50,
+        "feasibility": 95,
+        "error_reduction": 20,
+        "integration_ease": 90,
+        "risk_safety": 90
+      },
+      "expected_total": 52.75
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+project:
+  name: Automation Opportunity Scanner
+  version: 1.0.0
+  architecture_style: modular_monolith
+  target_path: hackathon_to_production
+
+source_of_truth:
+  - MASTER_INSTRUCTIONS.md
+  - docs/requirements/SRS.md
+  - docs/requirements/BUSINESS_RULES.md
+  - docs/domain/OPPORTUNITY_SCORING_MODEL.md
+  - docs/architecture/SYSTEM_ARCHITECTURE.md
+  - docs/data/DATABASE_SCHEMA.md
+  - docs/api/OPENAPI.yaml
+  - docs/testing/DEFINITION_OF_DONE.md
+
+build_order:
+  - id: M0
+    name: foundation
+    exit: repo, local environment, CI, health endpoints, design shell
+  - id: M1
+    name: identity_and_tenancy
+    exit: auth, organization membership, tenant-scoped access
+  - id: M2
+    name: process_intake
+    exit: project/process CRUD, text intake, questionnaire, basic document metadata
+  - id: M3
+    name: ai_process_extraction
+    exit: structured extraction, validation, provenance, review UI
+  - id: M4
+    name: process_map
+    exit: reviewed steps rendered and editable as nodes/edges
+  - id: M5
+    name: analysis
+    exit: pain points and candidate opportunities with evidence
+  - id: M6
+    name: scoring_and_prioritization
+    exit: deterministic score, confidence, impact-effort matrix
+  - id: M7
+    name: recommendation_and_roi
+    exit: technology recommendations and ROI only when inputs are sufficient
+  - id: M8
+    name: reporting
+    exit: executive report and share/export path
+  - id: M9
+    name: hardening
+    exit: AI evals, security checks, load baseline, observability, backup runbook
+
+quality_gates:
+  lint: required
+  typecheck: required
+  unit_tests: required
+  integration_tests: required
+  e2e_for_critical_flows: required
+  schema_validation: required
+  authorization_tests: required
+  ai_eval_regression: required_after_M5
+
+product_invariants:
+  deterministic_final_score: true
+  human_review_before_final_scoring: true
+  fabricate_missing_metrics: false
+  tenant_isolation: true
+  auditable_analysis: true
+  structured_ai_output: true
+
+mvp_deferred:
+  - automatic_execution_of_recommended_automation
+  - full_BPMN_2_0_modeler
+  - enterprise_SSO
+  - custom_model_training
+  - autonomous_agents_with_write_access_to_customer_systems
+  - microservices

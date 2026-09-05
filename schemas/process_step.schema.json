@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "process_step.schema.json",
+  "title": "ProcessStep",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "step_key",
+    "name",
+    "actor",
+    "system",
+    "manual",
+    "duration_minutes",
+    "evidence_refs"
+  ],
+  "properties": {
+    "step_key": {
+      "type": "string",
+      "pattern": "^S[0-9]+$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "actor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "system": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "manual": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "duration_minutes": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

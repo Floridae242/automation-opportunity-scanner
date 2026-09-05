@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "opportunity.schema.json",
+  "title": "AutomationOpportunityCandidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "title",
+    "step_keys",
+    "candidate_patterns",
+    "evidence_refs",
+    "prerequisites",
+    "risks",
+    "human_control",
+    "confidence"
+  ],
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "step_keys": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "candidate_patterns": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "api_integration",
+          "workflow",
+          "business_rules",
+          "document_ai_ocr",
+          "rpa",
+          "llm_assist",
+          "traditional_ml",
+          "data_etl",
+          "notification_event",
+          "human_in_loop"
+        ]
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "human_control": {
+      "type": "string",
+      "enum": [
+        "required",
+        "recommended",
+        "optional",
+        "unknown"
+      ]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    }
+  }
+}

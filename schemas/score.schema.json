@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "score.schema.json",
+  "title": "OpportunityScoreSnapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "scoring_version",
+    "total_score",
+    "assessment_confidence",
+    "dimensions"
+  ],
+  "properties": {
+    "scoring_version": {
+      "const": "aos-score-v1"
+    },
+    "total_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "assessment_confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "dimensions": {
+      "type": "object",
+      "required": [
+        "business_value",
+        "time_saving",
+        "repetitiveness",
+        "feasibility",
+        "error_reduction",
+        "integration_ease",
+        "risk_safety"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "business_value": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "time_saving": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "repetitiveness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "feasibility": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "error_reduction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "integration_ease": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "risk_safety": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    }
+  }
+}

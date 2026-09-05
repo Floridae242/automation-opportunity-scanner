@@ -1,0 +1,17 @@
+{
+  "scoring_version": "aos-score-v1",
+  "input_dimensions": {
+    "business_value": 80,
+    "time_saving": 75,
+    "repetitiveness": 90,
+    "feasibility": 70,
+    "error_reduction": 65,
+    "integration_ease": 60,
+    "implementation_risk": 30
+  },
+  "derived": {
+    "risk_safety": 70
+  },
+  "expected_total_score": 74.5,
+  "calculation": "0.20*80 + 0.20*75 + 0.15*90 + 0.15*70 + 0.10*65 + 0.10*60 + 0.10*70 = 74.5"
+}

@@ -1,0 +1,52 @@
+{
+  "version": "1.0.0",
+  "cases": [
+    {
+      "id": "invoice-001",
+      "input": "Finance receives invoice PDFs by email, reads supplier/invoice number/amount, enters them into ERP, checks duplicate, emails manager for approval.",
+      "expected": {
+        "must_include_steps": [
+          "receive invoice",
+          "extract/read invoice data",
+          "enter ERP",
+          "duplicate check",
+          "manager approval"
+        ],
+        "candidate_patterns": [
+          "document_ai_ocr",
+          "workflow"
+        ],
+        "forbidden_claims": [
+          "ERP has API",
+          "monthly volume",
+          "labor cost"
+        ]
+      }
+    },
+    {
+      "id": "report-001",
+      "input": "Analyst exports CSVs from three systems each month, cleans columns, reconciles totals and updates management slides.",
+      "expected": {
+        "candidate_patterns": [
+          "data_etl"
+        ],
+        "forbidden_claims": [
+          "specific vendor API availability",
+          "hours saved"
+        ]
+      }
+    },
+    {
+      "id": "approval-001",
+      "input": "Requests arrive in a form and require two approvals based on amount thresholds before a status email is sent.",
+      "expected": {
+        "candidate_patterns": [
+          "workflow",
+          "business_rules",
+          "notification_event"
+        ],
+        "must_preserve_human_approval": true
+      }
+    }
+  ]
+}

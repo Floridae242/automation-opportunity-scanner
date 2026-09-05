@@ -1,0 +1,29 @@
+{
+  "processes": [
+    {
+      "name": "Invoice Processing",
+      "department": "Finance",
+      "description": "Invoice arrives by email; finance reads fields, checks duplicate, enters ERP, routes approval, updates status."
+    },
+    {
+      "name": "Employee Onboarding",
+      "department": "HR",
+      "description": "HR receives starter information, creates tasks for IT/admin, follows up, and confirms completion."
+    },
+    {
+      "name": "Monthly Management Reporting",
+      "department": "Finance",
+      "description": "Analyst exports data, cleans and reconciles figures, prepares dashboard/slides, sends report."
+    },
+    {
+      "name": "Purchase Request",
+      "department": "Procurement",
+      "description": "Requester submits need, manager approves, procurement compares quotations, creates PO and notifies requester."
+    },
+    {
+      "name": "Customer Complaint Triage",
+      "department": "Service",
+      "description": "Email arrives, agent categorizes issue, checks customer context, routes to responsible team and tracks SLA."
+    }
+  ]
+}

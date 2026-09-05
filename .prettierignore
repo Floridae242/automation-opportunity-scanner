@@ -1,0 +1,16 @@
+node_modules
+.next
+package-lock.json
+coverage
+playwright-report
+test-results
+artifacts
+apps/api
+docs
+schemas
+evals
+examples
+prompts
+*.md
+PACK_MANIFEST_SHA256.txt
+
