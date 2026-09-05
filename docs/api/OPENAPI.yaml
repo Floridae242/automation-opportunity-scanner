@@ -5,6 +5,36 @@ info:
 servers:
   - url: /api/v1
 paths:
+  /auth/register:
+    post:
+      summary: Create account with owner organization and session (ADR-012)
+      responses:
+        '201': { description: Account created, session cookie set }
+        '409': { description: Email in use }
+  /auth/login:
+    post:
+      summary: Start a session
+      responses:
+        '200': { description: Authenticated, session cookie set }
+        '401': { description: Invalid credentials }
+        '429': { description: Too many attempts }
+  /auth/logout:
+    post:
+      summary: Revoke the current session
+      responses:
+        '204': { description: Signed out }
+  /auth/me:
+    get:
+      summary: Current user, memberships, active organization
+      responses:
+        '200': { description: OK }
+        '401': { description: Not authenticated }
+  /auth/active-organization:
+    post:
+      summary: Switch active organization (rotates session)
+      responses:
+        '200': { description: Switched }
+        '404': { description: Not a member (non-disclosing) }
   /projects:
     get:
       summary: List projects in active organization
