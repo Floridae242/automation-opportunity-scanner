@@ -89,12 +89,10 @@ describe("opportunity analyzer", () => {
   it("starts the reviewed-version analysis and routes to the overview", async () => {
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue({
-          ok: true,
-          json: async () => ({ analysis_id: ROW.id }),
-        }),
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ analysis_id: ROW.id }),
+      }),
     );
     render(<OpportunityAnalyzer processId="proc-1" />);
     await userEvent.click(
