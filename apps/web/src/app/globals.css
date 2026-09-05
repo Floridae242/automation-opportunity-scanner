@@ -827,6 +827,95 @@ main:focus {
   cursor: wait;
 }
 
+/* ---------- intake workspace ---------- */
+.intake-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 640px;
+}
+.intake-form label {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--ink-soft);
+}
+.intake-form input,
+.intake-form textarea,
+.intake-form select {
+  font: inherit;
+  padding: 9px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  width: 100%;
+}
+.intake-form textarea {
+  resize: vertical;
+}
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+.metrics-grid fieldset {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 10px;
+  display: flex;
+  gap: 8px;
+}
+.metrics-grid legend,
+.metrics-grid > label {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--ink-soft);
+}
+.metrics-grid fieldset input,
+.metrics-grid fieldset select {
+  flex: 1;
+  min-width: 0;
+}
+.project-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.inline-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.inline-form input {
+  font: inherit;
+  padding: 9px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+}
+.intake-saved {
+  color: var(--accent);
+  font-weight: 600;
+  margin: 8px 0 0;
+}
+.metrics-readout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 18px;
+  margin: 6px 0 0;
+}
+.metrics-readout dt {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.metrics-readout dd {
+  margin: 0;
+  font-size: 14px;
+}
+
 /* ---------- not found ---------- */
 .empty-icon-large {
   width: 64px;

@@ -44,6 +44,17 @@ paths:
       summary: Create project
       responses:
         '201': { description: Created }
+  /projects/{projectId}:
+    get:
+      summary: Read project with its processes
+      responses:
+        '200': { description: OK }
+        '404': { description: Not found in tenant scope }
+    patch:
+      summary: Rename or archive project (archive requires owner/admin)
+      responses:
+        '200': { description: Updated }
+        '403': { description: Role not permitted }
   /projects/{projectId}/processes:
     post:
       summary: Create process
@@ -54,9 +65,15 @@ paths:
           schema: { type: string, format: uuid }
       responses:
         '201': { description: Created }
+  /processes/{processId}:
+    get:
+      summary: Read process with version history
+      responses:
+        '200': { description: OK }
+        '404': { description: Not found in tenant scope }
   /processes/{processId}/intake:
     post:
-      summary: Save workflow intake
+      summary: Save workflow intake (new draft version; prior drafts superseded)
       parameters:
         - in: path
           name: processId

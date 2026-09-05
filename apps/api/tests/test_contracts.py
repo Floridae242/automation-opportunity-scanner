@@ -7,7 +7,7 @@ from aos_api.config import ROOT
 from aos_api.main import create_app
 
 
-def test_m1_openapi_contract():
+def test_m2_openapi_contract():
     schema = create_app().openapi()
     validate(schema)
     assert set(schema["paths"]) == {
@@ -18,6 +18,11 @@ def test_m1_openapi_contract():
         "/auth/logout",
         "/auth/me",
         "/auth/active-organization",
+        "/projects",
+        "/projects/{projectId}",
+        "/projects/{projectId}/processes",
+        "/processes/{processId}",
+        "/processes/{processId}/intake",
     }
 
 

@@ -9,6 +9,7 @@ import { Icon } from "./icon";
 
 const navigation = [
   { href: "/", label: "Overview", icon: "grid" },
+  { href: "/projects", label: "Projects", icon: "folder" },
   { href: "/guide", label: "Assessment guide", icon: "book" },
   { href: "/status", label: "Workspace status", icon: "pulse" },
 ] as const;

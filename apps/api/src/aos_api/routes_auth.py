@@ -27,6 +27,7 @@ from aos_api.models import Session as UserSession
 
 EMAIL_RE = re.compile(r"^[^@\s]{1,200}@[^@\s.]+(\.[^@\s.]+)+$")
 ROLE_ORDER = {"owner": 5, "admin": 4, "analyst": 3, "reviewer": 2, "viewer": 1}
+WRITE_ROLES = ("owner", "admin", "analyst")
 LOGIN_WINDOW_SECONDS = 60
 LOGIN_MAX_FAILURES = 10
 _login_attempts: dict[str, list[float]] = {}
