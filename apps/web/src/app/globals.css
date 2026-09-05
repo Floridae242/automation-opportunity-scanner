@@ -916,6 +916,66 @@ main:focus {
   font-size: 14px;
 }
 
+/* ---------- extraction + review ---------- */
+.extraction-panel {
+  align-items: center;
+}
+.extraction-panel progress {
+  width: 120px;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 0;
+}
+.extraction-panel progress::-webkit-progress-bar {
+  background: var(--accent-soft);
+}
+.extraction-panel progress::-webkit-progress-value {
+  background: var(--accent);
+}
+.review-card {
+  align-items: stretch;
+}
+.step-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  counter-reset: step;
+}
+.step-list li {
+  display: grid;
+  grid-template-columns: 30px repeat(2, minmax(0, 1fr)) 110px 170px auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  background: var(--canvas);
+}
+.step-list input[type="text"],
+.step-list input:not([type]),
+.step-list input[type="number"],
+.step-list select {
+  font: inherit;
+  font-size: 13.5px;
+  padding: 7px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  min-width: 0;
+}
+.step-list small {
+  grid-column: 1 / -1;
+}
+.review-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 /* ---------- not found ---------- */
 .empty-icon-large {
   width: 64px;

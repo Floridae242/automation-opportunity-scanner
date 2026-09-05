@@ -1,7 +1,18 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func, text
+from sqlalchemy import (
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -104,3 +115,74 @@ class ProcessVersion(Base):
     )
     created_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AnalysisRun(Base):
+    __tablename__ = "analysis_runs"
+    __table_args__ = (
+        UniqueConstraint("organization_id", "idempotency_key", name="uq_analysis_idempotency"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
+    process_version_id: Mapped[UUID] = mapped_column(ForeignKey("process_versions.id"))
+    status: Mapped[str] = mapped_column(String(16), server_default=text("'queued'"), index=True)
+    task: Mapped[str] = mapped_column(String(32), server_default=text("'process_extraction'"))
+    provider: Mapped[str | None] = mapped_column(String(32))
+    model_id: Mapped[str | None] = mapped_column(String(120))
+    prompt_version: Mapped[str | None] = mapped_column(String(64))
+    schema_version: Mapped[str | None] = mapped_column(String(64))
+    scoring_version: Mapped[str | None] = mapped_column(String(64))
+    idempotency_key: Mapped[str | None] = mapped_column(String(64))
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Actor(Base):
+    __tablename__ = "actors"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
+    process_version_id: Mapped[UUID] = mapped_column(ForeignKey("process_versions.id"), index=True)
+    name: Mapped[str] = mapped_column(String(200))
+    type: Mapped[str | None] = mapped_column(String(64))
+
+
+class Evidence(Base):
+    __tablename__ = "evidences"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
+    process_version_id: Mapped[UUID] = mapped_column(ForeignKey("process_versions.id"), index=True)
+    source_type: Mapped[str] = mapped_column(String(32))
+    source_ref: Mapped[str | None] = mapped_column(String(64))
+    excerpt: Mapped[str] = mapped_column(Text)
+    reviewed: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
+    confidence: Mapped[str | None] = mapped_column(String(8))
+
+
+class System(Base):
+    __tablename__ = "systems"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
+    process_version_id: Mapped[UUID] = mapped_column(ForeignKey("process_versions.id"), index=True)
+    name: Mapped[str] = mapped_column(String(200))
+    integration_status: Mapped[str] = mapped_column(String(32), server_default=text("'unknown'"))
+    integration_evidence_id: Mapped[UUID | None] = mapped_column(ForeignKey("evidences.id"))
+
+
+class ProcessStep(Base):
+    __tablename__ = "process_steps"
+    __table_args__ = (
+        UniqueConstraint("process_version_id", "step_key", name="uq_step_key_per_version"),
+        Index("ix_process_steps_version", "process_version_id", "sequence_no"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
+    process_version_id: Mapped[UUID] = mapped_column(ForeignKey("process_versions.id"))
+    step_key: Mapped[str] = mapped_column(String(16))
+    sequence_no: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(String(300))
+    actor_id: Mapped[UUID | None] = mapped_column(ForeignKey("actors.id"))
+    system_id: Mapped[UUID | None] = mapped_column(ForeignKey("systems.id"))
+    manual: Mapped[bool | None] = mapped_column()
+    duration_minutes: Mapped[float | None] = mapped_column(Float)
+    data_json: Mapped[dict[str, object]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))

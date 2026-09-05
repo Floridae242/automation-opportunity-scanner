@@ -122,3 +122,72 @@ export function parseProjectList(value: unknown): Project[] | null {
   }
   return projects;
 }
+
+export type StepDetail = Readonly<{
+  step_id: string;
+  step_key: string;
+  sequence_no: number;
+  name: string;
+  actor: string | null;
+  system: string | null;
+  manual: boolean | null;
+  duration_minutes: number | null;
+  evidence_refs: readonly string[];
+}>;
+
+export type VersionDetail = Readonly<{
+  id: string;
+  process_id: string;
+  version_no: number;
+  review_status: ReviewStatus;
+  source_summary: string;
+  steps: readonly StepDetail[];
+  evidence: readonly {
+    source_ref: string | null;
+    excerpt: string;
+    confidence: string | null;
+  }[];
+}>;
+
+export function parseVersionDetail(value: unknown): VersionDetail | null {
+  if (!isRecord(value)) return null;
+  if (typeof value.id !== "string" || !UUID.test(value.id)) return null;
+  if (typeof value.process_id !== "string" || !UUID.test(value.process_id))
+    return null;
+  if (typeof value.version_no !== "number") return null;
+  if (
+    typeof value.review_status !== "string" ||
+    !REVIEWS.has(value.review_status)
+  )
+    return null;
+  if (typeof value.source_summary !== "string") return null;
+  if (!Array.isArray(value.steps) || !Array.isArray(value.evidence))
+    return null;
+  const steps: StepDetail[] = [];
+  for (const item of value.steps) {
+    if (!isRecord(item)) return null;
+    if (typeof item.step_id !== "string" || !UUID.test(item.step_id))
+      return null;
+    if (typeof item.step_key !== "string" || !/^S[0-9]+$/.test(item.step_key))
+      return null;
+    if (typeof item.sequence_no !== "number" || typeof item.name !== "string")
+      return null;
+    for (const key of [
+      "actor",
+      "system",
+      "manual",
+      "duration_minutes",
+    ] as const) {
+      if (
+        item[key] !== null &&
+        typeof item[key] !== "string" &&
+        typeof item[key] !== "boolean" &&
+        typeof item[key] !== "number"
+      )
+        return null;
+    }
+    if (!Array.isArray(item.evidence_refs)) return null;
+    steps.push(item as unknown as StepDetail);
+  }
+  return value as unknown as VersionDetail;
+}

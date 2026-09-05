@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     environment: Literal["development", "test", "production"] = Field(
         default="production", validation_alias="APP_ENV"
     )
+    ai_provider: Literal["demo", "openai_compatible"] = Field(
+        default="demo", validation_alias="AI_PROVIDER"
+    )
+    ai_base_url: str | None = Field(default=None, validation_alias="AI_BASE_URL")
+    ai_api_key: SecretStr | None = Field(default=None, validation_alias="AI_API_KEY")
+    ai_model: str | None = Field(default=None, validation_alias="AI_MODEL")
 
     @field_validator("database_url")
     @classmethod

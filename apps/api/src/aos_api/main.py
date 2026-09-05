@@ -12,6 +12,7 @@ from starlette.concurrency import run_in_threadpool
 from aos_api.config import Settings
 from aos_api.db import DatabaseProbe, ReadinessProbe
 from aos_api.errors import install_error_handlers
+from aos_api.routes_analysis import analyses_router, versions_router
 from aos_api.routes_auth import router as auth_router
 from aos_api.routes_intake import processes_router, projects_router
 
@@ -69,6 +70,8 @@ def create_app(
     app.include_router(auth_router)
     app.include_router(projects_router)
     app.include_router(processes_router)
+    app.include_router(analyses_router)
+    app.include_router(versions_router)
 
     @app.get("/health/live", tags=["health"])
     def live() -> dict[str, str]:

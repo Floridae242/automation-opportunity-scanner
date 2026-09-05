@@ -1,8 +1,10 @@
 import { notFound, redirect } from "next/navigation";
-import { parseProcess } from "@/features/intake/contract";
+import { parseProcess, parseVersionDetail } from "@/features/intake/contract";
 import { formatMetricValue } from "@/features/intake/client-api";
 import { fetchWorkspaceJson } from "@/features/intake/workspace-data";
 import { IntakeForm } from "@/features/intake/intake-form";
+import { ExtractionPanel } from "@/features/intake/extraction-panel";
+import { StepReviewEditor } from "@/features/intake/step-review";
 import { readServerSession } from "@/features/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +34,19 @@ export default async function ProcessPage({
     null,
   );
   if (process === null) notFound();
+  const latestDraft =
+    process.latest_version !== null &&
+    process.latest_version.review_status === "draft"
+      ? process.latest_version
+      : null;
+  const draftDetail = latestDraft
+    ? await fetchWorkspaceJson(
+        `process-versions/${latestDraft.id}`,
+        parseVersionDetail,
+        null,
+      )
+    : null;
+  const reviewable = draftDetail !== null && draftDetail.steps.length > 0;
   return (
     <div className="page-content">
       <section className="page-intro">
@@ -48,6 +63,11 @@ export default async function ProcessPage({
         </div>
       </section>
       <IntakeForm processId={process.id} />
+      {reviewable ? (
+        <StepReviewEditor version={draftDetail} />
+      ) : latestDraft !== null ? (
+        <ExtractionPanel processId={process.id} />
+      ) : null}
       <section aria-label="Version history" className="workflow-section">
         <h2 className="quiet-label">DRAFT HISTORY</h2>
         {process.versions.length === 0 ? (

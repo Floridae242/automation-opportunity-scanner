@@ -10,12 +10,17 @@ describe("scanner proxy path whitelist", () => {
     [["projects", ID, "processes"], `projects/${ID}/processes`],
     [["processes", ID], `processes/${ID}`],
     [["processes", ID, "intake"], `processes/${ID}/intake`],
+    [["processes", ID, "analyses"], `processes/${ID}/analyses`],
+    [["analyses", ID], `analyses/${ID}`],
+    [["process-versions", ID], `process-versions/${ID}`],
+    [["process-versions", ID, "review"], `process-versions/${ID}/review`],
   ])("allows %s", (segments, expected) => {
     expect(scopedScannerPath(segments)).toBe(expected);
   });
 
   it.each([
     ["auth escape", ["auth", "me"]],
+    ["session escape", ["sessions", ID]],
     ["traversal", ["projects", "..", "sessions"]],
     ["foreign id segment", ["projects", "not-a-uuid", "processes"]],
     ["unknown action", ["processes", ID, "delete"]],
