@@ -11,10 +11,11 @@
 - EPIC-08 Recommendation + ROI scenarios
 - EPIC-09 Portfolio matrix/dashboard
 - EPIC-10 Executive report
-- EPIC-11 E2E + AI eval + deploy
+- EPIC-11 Intake document upload (untrusted parsing) + PDF export of report snapshots (FR-021/FR-022, ADR-010)
+- EPIC-12 E2E + AI eval + deploy
 
 ## P1
-Document upload parsing; comments; compare process versions; richer exports; configurable scoring weights.
+Comments; compare process versions; additional export formats (DOCX/slides); configurable scoring weights.
 
 ## P2
 Integration catalog; SSO; enterprise administration; benefit realization tracking.

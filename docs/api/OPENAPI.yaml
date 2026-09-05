@@ -84,6 +84,45 @@ paths:
       summary: Create report snapshot
       responses:
         '202': { description: Accepted }
+  /processes/{processId}/documents:
+    post:
+      summary: Upload process document as untrusted intake evidence (FR-021, ADR-010)
+      parameters:
+        - in: path
+          name: processId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Text or PDF within NFR-S03 size/type limits; parsed as untrusted content
+      responses:
+        '201': { description: Document stored as intake evidence }
+        '413': { description: File too large }
+        '415': { description: Unsupported media type }
+  /reports/{reportId}/pdf:
+    get:
+      summary: Render stored report snapshot as PDF (FR-022; no live AI calls)
+      parameters:
+        - in: path
+          name: reportId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: PDF export
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+        '404': { description: Not found in tenant scope }
 components:
   schemas:
     AnalysisAccepted:

@@ -37,6 +37,17 @@ Never silently substitute 0 or 50. Compute:
 
 A final score may be shown only when required minimum fields are reviewed. Otherwise show a provisional range or “insufficient evidence”.
 
+### Confidence formula (`aos-confidence-v1`, ADR-011)
+`assessment_confidence = 0.45*dimension_coverage + 0.35*source_quality + 0.20*review_status`
+- `dimension_coverage`: percent of the 7 dimensions computable from reviewed facts (0–100).
+- `source_quality`: mean over cited facts — user-entered 100, AI-extracted with evidence quote 70, AI-inferred without quote 40.
+- `review_status`: 100 if the process version is marked reviewed, else 0.
+
+### Final-score gate (ADR-011)
+- **Final:** all 7 dimensions non-null AND process version reviewed.
+- **Provisional:** `dimension_coverage >= 60` → show the number labeled `provisional` with missing-field list.
+- **Insufficient evidence:** `dimension_coverage < 60` → no number; show missing fields only.
+
 ## Priority bands
 - 80–100: investigate now
 - 65–79: high-priority candidate
@@ -44,3 +55,13 @@ A final score may be shown only when required minimum fields are reviewed. Other
 - <50: lower priority or redesign first
 
 Bands are portfolio guidance, not guarantees.
+
+### Governance review flag (ADR-008)
+`governance_review = implementation_risk >= 70`. The flag is advisory and orthogonal to bands: any banded opportunity may carry it, recommending human approval/exception handling per BR-008.
+
+## Portfolio matrix axes (ADR-008, `aos-portfolio-axes-v1`)
+Impact-vs-Effort placement (FR-016) uses derived display axes, never a second total score:
+- `impact = 0.45*business_value + 0.25*time_saving + 0.15*error_reduction + 0.15*strategic_alignment_input`
+- `effort = 0.35*integration_complexity + 0.25*change_complexity + 0.20*security_compliance_effort + 0.20*exception_handling_complexity`
+
+Inputs without reviewed evidence are `null`; the matrix cell then shows “insufficient evidence” instead of a guessed position. Axis-only inputs (strategic alignment, effort sub-factors) are collected at intake as optional facts and do not enter `aos-score-v1`.

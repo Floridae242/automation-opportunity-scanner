@@ -21,6 +21,8 @@
 - **FR-018** User can inspect analysis/audit history.
 - **FR-019** User can rerun analysis without overwriting earlier runs.
 - **FR-020** Organization members cannot access another organization's data.
+- **FR-021** User can upload process documents (text/pdf) as untrusted intake evidence, subject to size/type limits (NFR-S03); uploads never bypass schema validation or human review (ADR-010).
+- **FR-022** User can export a stored report snapshot as PDF; rendering uses stored structured facts only (FR-017, ADR-010).
 
 ## Non-functional summary
 See `NON_FUNCTIONAL_REQUIREMENTS.md` for measurable targets.
