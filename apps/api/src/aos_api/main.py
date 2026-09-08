@@ -12,6 +12,7 @@ from starlette.concurrency import run_in_threadpool
 from aos_api.config import Settings
 from aos_api.db import DatabaseProbe, ReadinessProbe
 from aos_api.errors import install_error_handlers
+from aos_api.routes_administration import administration_router
 from aos_api.routes_analysis import analyses_router, opportunities_router, versions_router
 from aos_api.routes_audit import audit_router
 from aos_api.routes_auth import router as auth_router
@@ -73,6 +74,7 @@ def create_app(
 
     install_error_handlers(app)
     app.include_router(auth_router)
+    app.include_router(administration_router)
     app.include_router(benefits_router)
     app.include_router(audit_router)
     app.include_router(projects_router)

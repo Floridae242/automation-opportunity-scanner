@@ -11,6 +11,8 @@ describe("scanner proxy path whitelist", () => {
     [["scoring-configurations"], "scoring-configurations"],
     [["integration-catalog"], "integration-catalog"],
     [["audit-events"], "audit-events"],
+    [["organization-members"], "organization-members"],
+    [["organization-members", ID], `organization-members/${ID}`],
     [["projects", ID], `projects/${ID}`],
     [["projects", ID, "processes"], `projects/${ID}/processes`],
     [["processes", ID], `processes/${ID}`],

@@ -248,3 +248,36 @@ def test_organization_switch_rotates_and_denies_foreign_org(client):
     denied = client.post("/auth/active-organization", json={"organization_id": str(stranger)})
     assert denied.status_code == 404
     assert denied.json()["error"]["code"] == "NOT_FOUND"
+
+
+def test_owner_can_add_and_change_organization_members(client):
+    register(client)
+    settings = Settings(environment="test")
+    engine = create_engine(settings.database_url.get_secret_value())
+    member = User(
+        id=uuid.uuid4(),
+        auth_subject="local:member@corp.test",
+        email="member@corp.test",
+        display_name="Member",
+        password_hash=hash_password("strong-pass-123"),
+    )
+    with sessionmaker(bind=engine)() as db:
+        db.add(member)
+        db.commit()
+    engine.dispose()
+    added = client.post(
+        "/organization-members",
+        json={"email": "member@corp.test", "role": "viewer"},
+    )
+    assert added.status_code == 201, added.text
+    assert added.json()["role"] == "viewer"
+    listed = client.get("/organization-members")
+    assert listed.status_code == 200
+    assert {item["email"] for item in listed.json()} == {"owner@corp.test", "member@corp.test"}
+    changed = client.patch(f"/organization-members/{added.json()['id']}", json={"role": "analyst"})
+    assert changed.status_code == 200
+    assert changed.json()["role"] == "analyst"
+    owner = next(item for item in listed.json() if item["email"] == "owner@corp.test")
+    last_owner = client.patch(f"/organization-members/{owner['id']}", json={"role": "admin"})
+    assert last_owner.status_code == 409
+    assert last_owner.json()["error"]["code"] == "LAST_OWNER"

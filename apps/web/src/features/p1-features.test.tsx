@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { CommentsPanel } from "./intake/comments-panel";
 import { VersionCompare } from "./intake/version-compare";
+import { MemberAdministration } from "./auth/member-administration";
 import { ScoringSettings } from "./portfolio/scoring-settings";
 import { BenefitTracker } from "./portfolio/benefit-tracker";
 
@@ -181,5 +182,47 @@ describe("P1 collaboration and configuration features", () => {
       ),
     );
     expect(refresh).toHaveBeenCalled();
+  });
+
+  it("adds an account to the organization and changes its role", async () => {
+    callScannerApi.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(
+      <MemberAdministration
+        members={[
+          {
+            id: ID_B,
+            user_id: ID_A,
+            email: "member@corp.test",
+            display_name: "Member",
+            role: "viewer",
+          },
+        ]}
+      />,
+    );
+    await user.type(screen.getByLabelText("Account email"), "new@corp.test");
+    await user.selectOptions(screen.getByLabelText("Initial role"), "analyst");
+    await user.click(screen.getByRole("button", { name: "Add member" }));
+    await waitFor(() =>
+      expect(callScannerApi).toHaveBeenCalledWith(
+        "POST",
+        "organization-members",
+        {
+          email: "new@corp.test",
+          role: "analyst",
+        },
+      ),
+    );
+    await user.selectOptions(
+      screen.getByLabelText("Role for Member"),
+      "reviewer",
+    );
+    await waitFor(() =>
+      expect(callScannerApi).toHaveBeenCalledWith(
+        "PATCH",
+        `organization-members/${ID_B}`,
+        { role: "reviewer" },
+      ),
+    );
   });
 });
