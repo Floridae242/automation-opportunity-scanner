@@ -22,6 +22,8 @@ describe("scanner proxy path whitelist", () => {
     [["analyses", ID, "opportunities"], `analyses/${ID}/opportunities`],
     [["opportunities", ID], `opportunities/${ID}`],
     [["reports", ID, "pdf"], `reports/${ID}/pdf`],
+    [["reports", ID, "docx"], `reports/${ID}/docx`],
+    [["reports", ID, "slides"], `reports/${ID}/slides`],
   ])("allows %s", (segments, expected) => {
     expect(scopedScannerPath(segments)).toBe(expected);
   });

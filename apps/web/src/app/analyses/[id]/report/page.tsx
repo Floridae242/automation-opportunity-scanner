@@ -36,12 +36,26 @@ export default async function ReportPage({
               : "Source version was not reviewed at export time."}
           </p>
         </div>
-        <a
-          className="button button-secondary"
-          href={`/api/scanner/reports/${snapshot.report_id}/pdf`}
-        >
-          Download PDF
-        </a>
+        <div className="button-row">
+          <a
+            className="button button-secondary"
+            href={`/api/scanner/reports/${snapshot.report_id}/pdf`}
+          >
+            Download PDF
+          </a>
+          <a
+            className="button button-secondary"
+            href={`/api/scanner/reports/${snapshot.report_id}/docx`}
+          >
+            Download DOCX
+          </a>
+          <a
+            className="button button-secondary"
+            href={`/api/scanner/reports/${snapshot.report_id}/slides`}
+          >
+            Download slides
+          </a>
+        </div>
       </section>
       <section aria-label="Pain points">
         <h2 className="quiet-label">PAIN POINTS</h2>

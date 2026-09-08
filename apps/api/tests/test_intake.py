@@ -179,7 +179,9 @@ def test_process_version_comments_are_tenant_scoped_and_audited(client):
         "Reviewed by operations.",
     ]
     with sessionmaker(bind=client.engine)() as db:  # type: ignore[attr-defined]
-        entry = db.scalar(select(AuditLog).where(AuditLog.action == "process_version.comment_created"))
+        entry = db.scalar(
+            select(AuditLog).where(AuditLog.action == "process_version.comment_created")
+        )
         assert entry is not None
         assert entry.metadata_json["body_length"] == len("Please verify the handoff.")
         assert "body" not in entry.metadata_json
@@ -193,10 +195,12 @@ def test_process_version_comments_validate_role_and_tenant(client):
     for body in ({"body": "   "}, {"body": "x" * 2001}, {"body": "valid", "role": "owner"}):
         assert client.post(f"/process-versions/{version_id}/comments", json=body).status_code == 422
     set_role(client, user["user"]["id"], "viewer")
-    assert client.post(f"/process-versions/{version_id}/comments", json={"body": "blocked"}).status_code == 403
+    response = client.post(f"/process-versions/{version_id}/comments", json={"body": "blocked"})
+    assert response.status_code == 403
     register(client, "other@tenant.test", org="Other")
     assert client.get(f"/process-versions/{version_id}/comments").status_code == 404
-    assert client.post(f"/process-versions/{version_id}/comments", json={"body": "blocked"}).status_code == 404
+    response = client.post(f"/process-versions/{version_id}/comments", json={"body": "blocked"})
+    assert response.status_code == 404
 
 
 def test_same_process_versions_can_be_compared(client):

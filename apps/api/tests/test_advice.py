@@ -244,6 +244,22 @@ def test_report_flow_snapshot_pdf_and_tenant(client):
     assert pdf.headers["content-type"] == "application/pdf"
     assert pdf.headers["content-disposition"] == f'attachment; filename="report-{report_id}.pdf"'
     assert pdf.content[:8] == b"%PDF-1.4"
+    docx = client.get(f"/reports/{report_id}/docx")
+    assert docx.status_code == 200
+    assert docx.headers["content-type"] == (
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    assert docx.headers["content-disposition"] == f'attachment; filename="report-{report_id}.docx"'
+    assert docx.content[:2] == b"PK"
+    slides = client.get(f"/reports/{report_id}/slides")
+    assert slides.status_code == 200
+    assert slides.headers["content-type"] == (
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    )
+    assert slides.headers["content-disposition"] == (
+        f'attachment; filename="report-{report_id}.pptx"'
+    )
+    assert slides.content[:2] == b"PK"
 
     client.post(
         "/auth/register",
@@ -255,6 +271,8 @@ def test_report_flow_snapshot_pdf_and_tenant(client):
         },
     )
     assert client.get(f"/reports/{report_id}/pdf").status_code == 404
+    assert client.get(f"/reports/{report_id}/docx").status_code == 404
+    assert client.get(f"/reports/{report_id}/slides").status_code == 404
     assert client.get(f"/analyses/{run_id}/report").status_code == 404
 
 

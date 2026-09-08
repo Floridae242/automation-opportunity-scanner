@@ -506,6 +506,12 @@ main:focus {
 .button-secondary:hover {
   background: var(--canvas);
 }
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
 .button:disabled,
 .button[aria-disabled="true"] {
   opacity: 0.6;

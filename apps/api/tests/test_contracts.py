@@ -24,10 +24,10 @@ def test_m5_openapi_contract():
         "/health/ready",
         "/opportunities/{opportunityId}",
         "/portfolio/opportunities",
-            "/process-versions/{versionId}",
-            "/process-versions/{versionId}/compare",
-            "/process-versions/{versionId}/comments",
-            "/process-versions/{versionId}/review",
+        "/process-versions/{versionId}",
+        "/process-versions/{versionId}/compare",
+        "/process-versions/{versionId}/comments",
+        "/process-versions/{versionId}/review",
         "/processes/{processId}",
         "/processes/{processId}/analyses",
         "/processes/{processId}/documents",
@@ -36,6 +36,8 @@ def test_m5_openapi_contract():
         "/projects/{projectId}",
         "/projects/{projectId}/processes",
         "/reports/{reportId}/pdf",
+        "/reports/{reportId}/docx",
+        "/reports/{reportId}/slides",
     }
 
 

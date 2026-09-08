@@ -31,7 +31,14 @@ from aos_api.models import (
     ProcessVersion,
     System,
 )
-from aos_api.routes_auth import WRITE_ROLES, AuthContext, db_session, require_roles, tenant_context
+from aos_api.routes_auth import (
+    WRITE_ROLES,
+    AuthContext,
+    auth_context,
+    db_session,
+    require_roles,
+    tenant_context,
+)
 
 analyses_router = APIRouter(tags=["analysis"])
 versions_router = APIRouter(tags=["process-versions"])
@@ -465,8 +472,6 @@ def read_version(
     actors = {
         a.id: a for a in db.scalars(select(Actor).where(Actor.process_version_id == version.id))
     }
-
-
     systems = {
         s.id: s for s in db.scalars(select(System).where(System.process_version_id == version.id))
     }
@@ -862,4 +867,64 @@ def report_pdf(
         content=document,
         media_type="application/pdf",
         headers={"content-disposition": f'attachment; filename="report-{reportId}.pdf"'},
+    )
+
+
+@opportunities_router.get("/reports/{reportId}/docx")
+def report_docx(
+    reportId: uuid.UUID,
+    org_id: uuid.UUID = Depends(tenant_context),
+    context: AuthContext = Depends(auth_context),
+    db: Session = Depends(db_session),
+) -> Response:
+    from aos_api.models import Report
+    from aos_api.office_export import render_docx
+
+    report = get_owned(db, Report, org_id, reportId)
+    snapshot = report.snapshot_json if isinstance(report.snapshot_json, dict) else {}
+    document = render_docx(snapshot)
+    audit(
+        db,
+        "report.exported",
+        org_id=org_id,
+        actor_id=context.user.id,
+        entity_type="report",
+        entity_id=str(report.id),
+        details={"format": "docx"},
+    )
+    db.commit()
+    return Response(
+        content=document,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"content-disposition": f'attachment; filename="report-{reportId}.docx"'},
+    )
+
+
+@opportunities_router.get("/reports/{reportId}/slides")
+def report_slides(
+    reportId: uuid.UUID,
+    org_id: uuid.UUID = Depends(tenant_context),
+    context: AuthContext = Depends(auth_context),
+    db: Session = Depends(db_session),
+) -> Response:
+    from aos_api.models import Report
+    from aos_api.office_export import render_slides
+
+    report = get_owned(db, Report, org_id, reportId)
+    snapshot = report.snapshot_json if isinstance(report.snapshot_json, dict) else {}
+    presentation = render_slides(snapshot)
+    audit(
+        db,
+        "report.exported",
+        org_id=org_id,
+        actor_id=context.user.id,
+        entity_type="report",
+        entity_id=str(report.id),
+        details={"format": "slides"},
+    )
+    db.commit()
+    return Response(
+        content=presentation,
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        headers={"content-disposition": f'attachment; filename="report-{reportId}.pptx"'},
     )

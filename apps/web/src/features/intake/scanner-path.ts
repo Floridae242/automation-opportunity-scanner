@@ -16,6 +16,8 @@ const ACTION_SEGMENTS = new Set([
   "reports",
   "report",
   "pdf",
+  "docx",
+  "slides",
   "documents",
   "comments",
   "compare",

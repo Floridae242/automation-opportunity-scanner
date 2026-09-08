@@ -235,6 +235,36 @@ paths:
             application/pdf:
               schema: { type: string, format: binary }
         '404': { description: Not found in tenant scope }
+  /reports/{reportId}/docx:
+    get:
+      summary: Render stored report snapshot as DOCX (no live AI calls)
+      parameters:
+        - in: path
+          name: reportId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: DOCX export
+          content:
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema: { type: string, format: binary }
+        '404': { description: Not found in tenant scope }
+  /reports/{reportId}/slides:
+    get:
+      summary: Render stored report snapshot as PowerPoint slides (no live AI calls)
+      parameters:
+        - in: path
+          name: reportId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: PowerPoint export
+          content:
+            application/vnd.openxmlformats-officedocument.presentationml.presentation:
+              schema: { type: string, format: binary }
+        '404': { description: Not found in tenant scope }
   /health/live:
     get:
       summary: Liveness probe
