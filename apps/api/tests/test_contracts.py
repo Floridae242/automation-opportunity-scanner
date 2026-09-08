@@ -21,6 +21,7 @@ def test_m5_openapi_contract():
         "/auth/me",
         "/auth/register",
         "/audit-events",
+        "/opportunities/{opportunityId}/benefits",
         "/health/live",
         "/health/ready",
         "/integration-catalog",

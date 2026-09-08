@@ -333,6 +333,22 @@ class RoiScenario(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class BenefitRealization(Base):
+    __tablename__ = "benefit_realizations"
+    __table_args__ = (
+        UniqueConstraint("opportunity_id", "period", name="uq_benefit_realization_period"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
+    opportunity_id: Mapped[UUID] = mapped_column(ForeignKey("opportunities.id"), index=True)
+    period: Mapped[str] = mapped_column(String(7))
+    hours_saved: Mapped[float | None] = mapped_column(Float)
+    monetary_benefit: Mapped[float | None] = mapped_column(Float)
+    notes: Mapped[str | None] = mapped_column(Text)
+    recorded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class Report(Base):
     __tablename__ = "reports"
     id: Mapped[UUID] = mapped_column(primary_key=True)
