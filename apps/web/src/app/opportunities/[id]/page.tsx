@@ -1,6 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { readServerSession } from "@/features/auth/session";
 import { fetchWorkspaceJson } from "@/features/intake/workspace-data";
+import {
+  BenefitTracker,
+  type BenefitRealization,
+} from "@/features/portfolio/benefit-tracker";
 import { parseOpportunityDetail } from "@/features/portfolio/contract";
 
 export const dynamic = "force-dynamic";
@@ -15,12 +19,41 @@ const WEIGHTS: Record<string, string> = {
   risk_safety: "10%",
 };
 
+function parseBenefits(value: unknown): BenefitRealization[] | null {
+  if (!Array.isArray(value)) return null;
+  const benefits: BenefitRealization[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object") return null;
+    const benefit = item as Record<string, unknown>;
+    if (
+      typeof benefit.id !== "string" ||
+      typeof benefit.period !== "string" ||
+      (benefit.hours_saved !== null &&
+        typeof benefit.hours_saved !== "number") ||
+      (benefit.monetary_benefit !== null &&
+        typeof benefit.monetary_benefit !== "number") ||
+      (benefit.notes !== null && typeof benefit.notes !== "string")
+    ) {
+      return null;
+    }
+    benefits.push({
+      id: benefit.id,
+      period: benefit.period,
+      hours_saved: benefit.hours_saved as number | null,
+      monetary_benefit: benefit.monetary_benefit as number | null,
+      notes: benefit.notes as string | null,
+    });
+  }
+  return benefits;
+}
+
 export default async function OpportunityPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  if (!(await readServerSession())) redirect("/login");
+  const session = await readServerSession();
+  if (!session) redirect("/login");
   const { id } = await params;
   const opportunity = await fetchWorkspaceJson(
     `opportunities/${id}`,
@@ -28,6 +61,15 @@ export default async function OpportunityPage({
     null,
   );
   if (opportunity === null) notFound();
+  const benefits = await fetchWorkspaceJson(
+    `opportunities/${id}/benefits`,
+    parseBenefits,
+    [],
+  );
+  const active = session.memberships.find(
+    (membership) =>
+      membership.organization_id === session.active_organization_id,
+  );
   return (
     <div className="page-content">
       <section className="page-intro">
@@ -187,6 +229,14 @@ export default async function OpportunityPage({
           )}
         </section>
       )}
+      <BenefitTracker
+        benefits={benefits}
+        editable={Boolean(
+          active &&
+          ["owner", "admin", "analyst", "reviewer"].includes(active.role),
+        )}
+        opportunityId={opportunity.id}
+      />
       <section aria-label="Scope" className="workflow-section">
         <h2 className="quiet-label">SCOPE</h2>
         <div className="evidence-rail">

@@ -187,6 +187,42 @@ def test_cross_tenant_opportunities_denied(client):
     assert client.get(f"/opportunities/{opportunity_id}").status_code == 404
 
 
+def test_benefits_are_tenant_scoped_and_one_per_month(client):
+    process = reviewed_process(client)
+    analysis_id = client.post(f"/processes/{process['id']}/analyses").json()["analysis_id"]
+    opportunity_id = client.get(f"/analyses/{analysis_id}/opportunities").json()[0]["id"]
+    created = client.post(
+        f"/opportunities/{opportunity_id}/benefits",
+        json={
+            "period": "2026-09",
+            "hours_saved": 12.5,
+            "monetary_benefit": 2500,
+            "notes": "Timesheet evidence",
+        },
+    )
+    assert created.status_code == 201, created.text
+    assert created.json()["hours_saved"] == 12.5
+    listed = client.get(f"/opportunities/{opportunity_id}/benefits")
+    assert listed.status_code == 200
+    assert listed.json()[0]["notes"] == "Timesheet evidence"
+    duplicate = client.post(
+        f"/opportunities/{opportunity_id}/benefits",
+        json={"period": "2026-09", "hours_saved": 1},
+    )
+    assert duplicate.status_code == 409
+    assert duplicate.json()["error"]["code"] == "BENEFIT_ALREADY_RECORDED"
+    client.post(
+        "/auth/register",
+        json={
+            "email": "benefit@other.test",
+            "password": "strong-pass-123",
+            "display_name": "Other",
+            "organization_name": "Other",
+        },
+    )
+    assert client.get(f"/opportunities/{opportunity_id}/benefits").status_code == 404
+
+
 def test_portfolio_is_tenant_scoped_and_filters_stored_scores(client):
     process = reviewed_process(client)
     client.post(f"/processes/{process['id']}/analyses")

@@ -23,7 +23,7 @@ def test_database_probe_checks_migration_and_connection():
     ):
         probe = DatabaseProbe(settings())
         context.configure.return_value.get_current_heads.return_value = (
-            "0010_scoring_configurations",
+            "0011_benefit_realization",
         )
         assert probe.check()
         context.configure.return_value.get_current_heads.return_value = ()

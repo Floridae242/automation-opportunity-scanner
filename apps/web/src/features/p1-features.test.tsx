@@ -1,9 +1,10 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { CommentsPanel } from "./intake/comments-panel";
 import { VersionCompare } from "./intake/version-compare";
 import { ScoringSettings } from "./portfolio/scoring-settings";
+import { BenefitTracker } from "./portfolio/benefit-tracker";
 
 const refresh = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
@@ -152,5 +153,33 @@ describe("P1 collaboration and configuration features", () => {
     expect(
       screen.getByText("Scoring settings are unavailable for this workspace."),
     ).toBeInTheDocument();
+  });
+
+  it("records actual benefits separately from estimates", async () => {
+    callScannerApi.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<BenefitTracker benefits={[]} editable opportunityId={ID_A} />);
+    expect(screen.getByText("No actual benefits recorded yet.")).toBeVisible();
+    fireEvent.change(screen.getByLabelText("Month"), {
+      target: { value: "2026-09" },
+    });
+    await user.type(screen.getByLabelText("Actual hours saved"), "12.5");
+    await user.type(screen.getByLabelText("Evidence or notes"), "Timesheet");
+    await user.click(
+      screen.getByRole("button", { name: "Record actual benefit" }),
+    );
+    await waitFor(() =>
+      expect(callScannerApi).toHaveBeenCalledWith(
+        "POST",
+        `opportunities/${ID_A}/benefits`,
+        {
+          period: "2026-09",
+          hours_saved: 12.5,
+          monetary_benefit: null,
+          notes: "Timesheet",
+        },
+      ),
+    );
+    expect(refresh).toHaveBeenCalled();
   });
 });

@@ -24,6 +24,7 @@ describe("scanner proxy path whitelist", () => {
     [["process-versions", ID, "compare"], `process-versions/${ID}/compare`],
     [["analyses", ID, "opportunities"], `analyses/${ID}/opportunities`],
     [["opportunities", ID], `opportunities/${ID}`],
+    [["opportunities", ID, "benefits"], `opportunities/${ID}/benefits`],
     [["reports", ID, "pdf"], `reports/${ID}/pdf`],
     [["reports", ID, "docx"], `reports/${ID}/docx`],
     [["reports", ID, "slides"], `reports/${ID}/slides`],
