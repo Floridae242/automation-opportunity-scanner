@@ -1,6 +1,7 @@
 """M3 process extraction: provider adapters, schema/semantic validation (FR-005..007)."""
 
 import json
+import os
 import re
 from pathlib import Path
 from typing import Protocol
@@ -10,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 PROMPT_VERSION = "aos-process-extract v1.0.0"
 SCHEMA_VERSION = "process.schema.json@aos-v1"
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = Path(os.environ.get("AOS_ROOT", Path(__file__).resolve().parents[4]))
 
 
 class StepDraft(BaseModel):

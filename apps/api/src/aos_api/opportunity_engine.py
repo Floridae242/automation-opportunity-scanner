@@ -6,6 +6,7 @@ from typing import cast
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from aos_api.advice import AdviceFacts, recommend, time_scenarios
 from aos_api.intake import audit
 from aos_api.models import (
     AnalysisRun,
@@ -15,6 +16,8 @@ from aos_api.models import (
     PainPoint,
     ProcessStep,
     ProcessVersion,
+    Recommendation,
+    RoiScenario,
     System,
 )
 from aos_api.opportunity import (
@@ -104,6 +107,12 @@ def build_facts(db: Session, version: ProcessVersion) -> OpportunityFacts:
         change_complexity=_num(metrics, "change_complexity"),
         security_compliance_effort=_num(metrics, "security_compliance_effort"),
         exception_handling_complexity=_num(metrics, "exception_handling_complexity"),
+        realistic_automation_rate=_num(metrics, "realistic_automation_rate"),
+        exception_rate=_num(metrics, "exception_rate"),
+        loaded_hourly_cost=_num(metrics, "loaded_hourly_cost"),
+        currency=_str(metrics, "currency"),
+        monthly_operating_cost=_num(metrics, "monthly_operating_cost"),
+        implementation_cost=_num(metrics, "implementation_cost"),
         fact_source_qualities=qualities,
         reviewed=version.review_status == "reviewed",
     )
@@ -188,6 +197,7 @@ def run_opportunity_analysis(
             )
         )
         opportunity_id = opportunity.id
+        _persist_advice(db, org_id, opportunity, facts, snapshot)
     audit(
         db,
         "analysis.opportunity_completed",
@@ -199,3 +209,57 @@ def run_opportunity_analysis(
     )
     db.commit()
     return run
+
+
+def _persist_advice(
+    db: Session,
+    org_id: uuid.UUID,
+    opportunity: Opportunity,
+    facts: OpportunityFacts,
+    snapshot: dict[str, object],
+) -> None:
+    advice_facts = AdviceFacts(
+        manual_steps=sum(1 for step in facts.steps if step.manual),
+        total_steps=len(facts.steps),
+        integration_statuses=tuple(s.integration_status for s in facts.systems),
+        has_approvals=bool(facts.approvals_required),
+        error_rate=facts.error_rate,
+        sensitivity=facts.sensitivity,
+        confidence=float(cast("float", snapshot["assessment_confidence"])),
+        frequency_per_week=facts.frequency_per_week,
+        minutes_per_occurrence=facts.step_total_minutes,
+        realistic_automation_rate=facts.realistic_automation_rate,
+        exception_rate=facts.exception_rate,
+        loaded_hourly_cost=facts.loaded_hourly_cost,
+        currency=facts.currency,
+        monthly_operating_cost=facts.monthly_operating_cost,
+        implementation_cost=facts.implementation_cost,
+    )
+    advice = recommend(advice_facts)
+    if advice is not None:
+        db.add(
+            Recommendation(
+                id=uuid.uuid4(),
+                organization_id=org_id,
+                opportunity_id=opportunity.id,
+                patterns_json=advice["patterns"],
+                rationale=advice["rationale"],
+                prerequisites_json=advice["prerequisites"],
+                risks_json=advice["risks"],
+                human_control=advice["human_control"],
+                rejected_alternatives_json=advice["rejected_alternatives"],
+                confidence=advice["confidence"],
+            )
+        )
+    scenarios = time_scenarios(advice_facts)
+    inputs = scenarios.get("inputs")
+    db.add(
+        RoiScenario(
+            id=uuid.uuid4(),
+            organization_id=org_id,
+            opportunity_id=opportunity.id,
+            input_json=dict(inputs) if isinstance(inputs, dict) else {},
+            output_json=scenarios,
+        )
+    )
+    db.flush()

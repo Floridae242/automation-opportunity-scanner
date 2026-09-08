@@ -1,5 +1,6 @@
 import { authErrorBody } from "@/features/auth/proxy";
 import { scopedScannerPath } from "@/features/intake/scanner-path";
+import { scannerUpstreamUrl } from "@/features/intake/scanner-url";
 
 export const dynamic = "force-dynamic";
 
@@ -11,12 +12,13 @@ async function forward(
   const headers: Record<string, string> = { "Cache-Control": "no-store" };
   const cookie = request.headers.get("cookie");
   if (cookie) headers.cookie = cookie;
-  let body: string | undefined;
+  let body: ArrayBuffer | undefined;
   if (method !== "GET") {
-    const raw = await request.text();
-    if (raw) {
+    const raw = await request.arrayBuffer();
+    if (raw.byteLength > 0) {
       body = raw;
-      headers["content-type"] = "application/json";
+      const contentType = request.headers.get("content-type");
+      if (contentType) headers["content-type"] = contentType;
     }
   }
   const base = (process.env.API_BASE_URL || "http://127.0.0.1:8000").replace(
@@ -25,7 +27,8 @@ async function forward(
   );
   let upstream: Response;
   try {
-    upstream = await fetch(`${base}/${path}`, {
+    const upstreamUrl = scannerUpstreamUrl(base, path, request.url);
+    upstream = await fetch(upstreamUrl, {
       method,
       headers,
       body,
@@ -39,11 +42,15 @@ async function forward(
       "The workspace service is unavailable. Try again.",
     );
   }
-  const text = await upstream.text();
+  const upstreamBody = await upstream.arrayBuffer();
   const responseHeaders = new Headers({ "Cache-Control": "no-store" });
   const contentType = upstream.headers.get("content-type");
   if (contentType) responseHeaders.set("content-type", contentType);
-  return new Response(text, {
+  const contentDisposition = upstream.headers.get("content-disposition");
+  if (contentDisposition) {
+    responseHeaders.set("content-disposition", contentDisposition);
+  }
+  return new Response(upstreamBody, {
     status: upstream.status,
     headers: responseHeaders,
   });

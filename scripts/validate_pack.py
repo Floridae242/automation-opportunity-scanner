@@ -6,14 +6,25 @@ except Exception:
     yaml = None
 
 root = Path(__file__).resolve().parents[1]
+ignored_directories = {".git", ".next", "node_modules", ".venv", "coverage", "playwright-report", "test-results"}
+
+
+def pack_files(pattern: str):
+    return (
+        path
+        for path in root.rglob(pattern)
+        if not any(parent.name in ignored_directories for parent in path.parents)
+    )
+
+
 errors = []
-for p in root.rglob('*.json'):
+for p in pack_files('*.json'):
     try:
         json.loads(p.read_text())
     except Exception as e:
         errors.append(f"JSON {p.relative_to(root)}: {e}")
 if yaml:
-    for p in list(root.rglob('*.yaml')) + list(root.rglob('*.yml')):
+    for p in list(pack_files('*.yaml')) + list(pack_files('*.yml')):
         try:
             yaml.safe_load(p.read_text())
         except Exception as e:

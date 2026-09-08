@@ -2,10 +2,11 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from aos_api.document_ingestion import MAX_BYTES, parse_document
 from aos_api.errors import ApiError
 from aos_api.intake import (
     IntakeIn,
@@ -18,7 +19,7 @@ from aos_api.intake import (
     project_payload,
     save_intake,
 )
-from aos_api.models import Process, Project
+from aos_api.models import Process, ProcessDocument, Project
 from aos_api.routes_auth import WRITE_ROLES, AuthContext, db_session, require_roles, tenant_context
 
 projects_router = APIRouter(tags=["projects"])
@@ -150,6 +151,75 @@ def read_process(
     db: Session = Depends(db_session),
 ) -> dict[str, object]:
     return process_payload(db, get_owned(db, Process, org_id, processId))
+
+
+@processes_router.post("/processes/{processId}/documents", status_code=201)
+async def upload_process_document(
+    processId: uuid.UUID,
+    file: UploadFile = File(...),
+    org_id: uuid.UUID = Depends(tenant_context),
+    context: AuthContext = Depends(_writer),
+    db: Session = Depends(db_session),
+) -> dict[str, object]:
+    process = get_owned(db, Process, org_id, processId)
+    content = await file.read(MAX_BYTES + 1)
+    media_type, extracted_text, digest = parse_document(
+        file.filename or "", file.content_type, content
+    )
+    document = ProcessDocument(
+        id=uuid.uuid4(),
+        organization_id=org_id,
+        process_id=process.id,
+        filename=file.filename or "",
+        media_type=media_type,
+        byte_size=len(content),
+        sha256=digest,
+        extracted_text=extracted_text,
+        created_by=context.user.id,
+    )
+    db.add(document)
+    audit(
+        db,
+        "process.document_uploaded",
+        org_id=org_id,
+        actor_id=context.user.id,
+        entity_type="process_document",
+        entity_id=str(document.id),
+        details={"media_type": media_type, "byte_size": len(content)},
+    )
+    db.commit()
+    return {
+        "id": str(document.id),
+        "filename": document.filename,
+        "media_type": media_type,
+        "byte_size": len(content),
+        "extracted_text_chars": len(extracted_text),
+    }
+
+
+@processes_router.get("/processes/{processId}/documents")
+def list_process_documents(
+    processId: uuid.UUID,
+    org_id: uuid.UUID = Depends(tenant_context),
+    db: Session = Depends(db_session),
+) -> list[dict[str, object]]:
+    process = get_owned(db, Process, org_id, processId)
+    documents = db.scalars(
+        select(ProcessDocument)
+        .where(ProcessDocument.organization_id == org_id, ProcessDocument.process_id == process.id)
+        .order_by(ProcessDocument.created_at.desc())
+    )
+    return [
+        {
+            "id": str(document.id),
+            "filename": document.filename,
+            "media_type": document.media_type,
+            "byte_size": document.byte_size,
+            "extracted_text_chars": len(document.extracted_text),
+            "created_at": document.created_at.isoformat(),
+        }
+        for document in documents
+    ]
 
 
 @processes_router.post("/processes/{processId}/intake")

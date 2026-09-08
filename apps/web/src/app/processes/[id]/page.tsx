@@ -3,6 +3,7 @@ import { parseProcess, parseVersionDetail } from "@/features/intake/contract";
 import { formatMetricValue } from "@/features/intake/client-api";
 import { fetchWorkspaceJson } from "@/features/intake/workspace-data";
 import { IntakeForm } from "@/features/intake/intake-form";
+import { DocumentUpload } from "@/features/intake/document-upload";
 import { ExtractionPanel } from "@/features/intake/extraction-panel";
 import { StepReviewEditor } from "@/features/intake/step-review";
 import { OpportunityAnalyzer } from "@/features/portfolio/opportunity-analyzer";
@@ -64,6 +65,7 @@ export default async function ProcessPage({
         </div>
       </section>
       <IntakeForm processId={process.id} />
+      <DocumentUpload processId={process.id} />
       {reviewable ? (
         <StepReviewEditor version={draftDetail} />
       ) : latestDraft !== null ? (

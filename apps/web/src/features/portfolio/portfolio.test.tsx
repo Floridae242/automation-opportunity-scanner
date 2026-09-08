@@ -3,10 +3,13 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import {
   parseAnalysisOverview,
+  parseAxes,
   parseOpportunityDetail,
   parseOpportunityList,
+  parseOpportunityRow,
 } from "./contract";
 import { OpportunityAnalyzer } from "./opportunity-analyzer";
+import { ExportReportButton } from "./export-report";
 
 const nav = vi.hoisted(() => ({
   replace: vi.fn(),
@@ -56,6 +59,31 @@ describe("portfolio contract", () => {
     expect(parseOpportunityList([{ ...ROW, confidence: "secret" }])).toBeNull();
   });
 
+  it("preserves known scores while making unknown optional fields explicit", () => {
+    expect(parseAxes(undefined)).toEqual({ impact: null, effort: null });
+    expect(parseAxes({ version: 1, impact: Infinity, effort: 20 })).toEqual({
+      version: undefined,
+      impact: null,
+      effort: 20,
+    });
+    expect(
+      parseOpportunityRow({
+        ...ROW,
+        status: undefined,
+        priority_band: 1,
+        total_score: "82",
+        scoring_version: false,
+        governance_review: false,
+      }),
+    ).toMatchObject({
+      status: "candidate",
+      priority_band: null,
+      total_score: null,
+      scoring_version: null,
+      governance_review: false,
+    });
+  });
+
   it("parses analysis overview and opportunity detail", () => {
     const overview = {
       analysis_id: ROW.id,
@@ -82,6 +110,78 @@ describe("portfolio contract", () => {
       parseOpportunityDetail(DETAIL)?.score.dimensions.time_saving,
     ).toBeNull();
     expect(parseOpportunityDetail({ ...DETAIL, score: null })).toBeNull();
+  });
+
+  it("parses defensible recommendation and ROI evidence, dropping malformed advice", () => {
+    const detail = {
+      ...DETAIL,
+      scope: "not-a-record",
+      recommendation: {
+        patterns: ["workflow automation"],
+        rationale: "Evidence shows repeated manual data entry.",
+        prerequisites: ["Confirm API access"],
+        risks: ["Exception handling"],
+        human_control: "Review exceptions before release.",
+        rejected_alternatives: [
+          { pattern: "RPA", why: "No stable UI evidence" },
+        ],
+        confidence: "medium",
+      },
+      roi: {
+        available: true,
+        scenarios: [
+          {
+            automation_rate: 0.7,
+            exception_rate: 0.1,
+            net_hours_saved_month: 24,
+            stated_by: "Assumption",
+          },
+        ],
+      },
+    };
+    const parsed = parseOpportunityDetail(detail);
+    expect(parsed?.scope).toEqual({});
+    expect(parsed?.recommendation?.patterns).toEqual(["workflow automation"]);
+    expect(parsed?.roi?.available).toBe(true);
+    expect(
+      parseOpportunityDetail({
+        ...detail,
+        recommendation: {
+          ...detail.recommendation,
+          rejected_alternatives: [null],
+        },
+        roi: { available: true, scenarios: [null] },
+      }),
+    ).toMatchObject({ recommendation: null, roi: null });
+    expect(
+      parseOpportunityDetail({
+        ...detail,
+        score: { ...DETAIL.score, dimensions: { business_value: "80" } },
+      }),
+    ).toBeNull();
+  });
+});
+
+describe("report envelope", () => {
+  it("freezes snapshot with a usable report id and rejects tampered payloads", async () => {
+    const { parseReportEnvelope } = await import("./contract");
+    const good = {
+      report_id: "2b1f6a7c-9d3e-4f5a-8b6c-7d8e9f0a1b2c",
+      status: "ready",
+      snapshot: {
+        schema_version: "aos-report-v1",
+        pain_points: [],
+        opportunities: [],
+      },
+    };
+    expect(parseReportEnvelope(good)?.report_id).toBe(good.report_id);
+    expect(parseReportEnvelope({ ...good, report_id: "../evil" })).toBeNull();
+    expect(
+      parseReportEnvelope({
+        ...good,
+        snapshot: { ...good.snapshot, pain_points: null },
+      }),
+    ).toBeNull();
   });
 });
 
@@ -123,5 +223,33 @@ describe("opportunity analyzer", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "reviewed before scoring",
     );
+  });
+});
+
+describe("report export", () => {
+  it("freezes the analysis and opens its immutable report", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ status: "ready" }),
+      }),
+    );
+    render(<ExportReportButton analysisId={ROW.id} />);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Export executive report" }),
+    );
+    await vi.waitFor(() =>
+      expect(nav.push).toHaveBeenCalledWith(`/analyses/${ROW.id}/report`),
+    );
+  });
+
+  it("keeps the analysis page and shows a safe failure message", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network")));
+    render(<ExportReportButton analysisId={ROW.id} />);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Export executive report" }),
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent("Export failed");
   });
 });

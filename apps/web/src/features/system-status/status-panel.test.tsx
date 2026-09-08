@@ -24,7 +24,7 @@ describe("workspace status", () => {
       expect.objectContaining({ cache: "no-store" }),
     );
     expect(
-      screen.getByText(/does not enable assessment creation/i),
+      screen.getByText(/does not prove that every external AI provider/i),
     ).toBeVisible();
   });
 

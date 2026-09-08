@@ -39,7 +39,7 @@ export default function Guide() {
             <Icon name="shield" />
           </span>
           <h2>Review before you prioritize</h2>
-          <p>The planned assessment keeps human judgment in the loop:</p>
+          <p>The assessment keeps human judgment in the loop:</p>
           <ul className="check-list">
             <li>AI extraction produces a draft for human review</li>
             <li>Unknown values stay “Not provided”, never zero</li>
@@ -52,15 +52,14 @@ export default function Guide() {
       <section className="guide-next">
         <div>
           <p className="eyebrow">WHAT YOU CAN DO TODAY</p>
-          <h2>Explore the foundation</h2>
+          <h2>Start an assessment</h2>
           <p>
-            Browse this guide and check whether the local services are
-            available. Sign-in, intake, analysis, and reports will arrive in
-            later milestones.
+            Sign in to create a project, capture a process, review its AI draft,
+            and investigate the resulting opportunities.
           </p>
         </div>
-        <Link href="/status" className="button button-secondary">
-          View workspace status
+        <Link href="/projects" className="button button-secondary">
+          Open projects
           <Icon name="arrow" size={17} />
         </Link>
       </section>

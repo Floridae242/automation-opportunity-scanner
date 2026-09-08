@@ -35,6 +35,12 @@ class IntakeMetrics(BaseModel):
     change_complexity: float | None = Field(default=None, ge=0, le=100)
     security_compliance_effort: float | None = Field(default=None, ge=0, le=100)
     exception_handling_complexity: float | None = Field(default=None, ge=0, le=100)
+    realistic_automation_rate: float | None = Field(default=None, ge=0, le=1)
+    exception_rate: float | None = Field(default=None, ge=0, le=1)
+    loaded_hourly_cost: float | None = Field(default=None, ge=0)
+    currency: str | None = Field(default=None, pattern=r"^[A-Z]{3}$")
+    monthly_operating_cost: float | None = Field(default=None, ge=0)
+    implementation_cost: float | None = Field(default=None, ge=0)
 
 
 class IntakeIn(BaseModel):

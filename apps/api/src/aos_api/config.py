@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Literal
 
@@ -5,7 +6,7 @@ from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import make_url
 
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = Path(os.environ.get("AOS_ROOT", Path(__file__).resolve().parents[4]))
 
 
 class Settings(BaseSettings):

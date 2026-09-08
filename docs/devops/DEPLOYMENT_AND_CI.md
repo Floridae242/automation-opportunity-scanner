@@ -14,6 +14,8 @@
 ## Deployment
 Frontend can use a managed Next.js platform; backend/worker as containers; PostgreSQL/Redis/object storage managed. Staging and production use separate credentials/data.
 
+Use `apps/api/Dockerfile` to build the API image and `infra/compose.production.example.yaml` only as a provider-neutral runtime template. See `PRODUCTION_RUNBOOK.md` for secret validation, health checks, migrations, rollback, and evidence handling. Image publishing and remote deployment remain manual release actions.
+
 ## Migration policy
 Run backward-compatible migrations before new app version where possible. Destructive changes use expand/migrate/contract. Backup/rollback steps are documented for release.
 

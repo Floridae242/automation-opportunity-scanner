@@ -99,6 +99,7 @@ test("reviewed version scores into a final explained opportunity", async ({
 
   await page.getByRole("button", { name: "Analyze opportunities" }).click();
   await expect(page).toHaveURL(/\/analyses\/[0-9a-f-]+$/, { timeout: 10_000 });
+  const analysisUrl = page.url();
   await expect(page.getByText("PAIN POINTS")).toBeVisible();
   await expect(page.getByText("repetitive manual work")).toBeVisible();
   const opportunityLink = page.getByRole("link", {
@@ -107,6 +108,45 @@ test("reviewed version scores into a final explained opportunity", async ({
   await expect(opportunityLink).toBeVisible();
   await expect(page.getByText(/· confidence/)).toBeVisible();
   await expect(page.getByText(/final ·/)).toBeVisible();
+
+  await page.getByRole("link", { name: "Portfolio" }).click();
+  await expect(page).toHaveURL(/\/portfolio$/);
+  await expect(page.getByText("RANKED OPPORTUNITIES")).toBeVisible();
+  await page.getByLabel("Minimum score").fill("1");
+  await page.getByRole("button", { name: "Apply filters" }).click();
+  await expect(
+    page.getByText("Automate repetitive manual steps"),
+  ).toBeVisible();
+  await page
+    .getByRole("link", { name: "Automate repetitive manual steps" })
+    .click();
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "Automate repetitive manual steps",
+    }),
+  ).toBeVisible();
+  await page.goto(analysisUrl);
+  await expect(page.getByText("PAIN POINTS")).toBeVisible();
+
+  await page.getByRole("button", { name: "Export executive report" }).click();
+  await expect(page).toHaveURL(/\/analyses\/[0-9a-f-]+\/report$/, {
+    timeout: 10_000,
+  });
+  await expect(
+    page.getByRole("heading", {
+      name: "Handle order changes — opportunity report",
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Open full breakdown" }),
+  ).toBeVisible();
+  const download = page.waitForEvent("download");
+  await page.getByRole("link", { name: "Download PDF" }).click();
+  expect((await download).suggestedFilename()).toMatch(/\.pdf$/);
+
+  await page.goto(analysisUrl);
+  await expect(opportunityLink).toBeVisible();
 
   await opportunityLink.click();
   await expect(

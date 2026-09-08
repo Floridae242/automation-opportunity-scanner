@@ -1,0 +1,114 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Automation Opportunity Scanner — Architecture and Delivery Tour",
+  "description": "A source-anchored tour of the current request path, evidence controls, scoring, reporting, portfolio, and remaining delivery gaps.",
+  "steps": [
+    {
+      "directory": "apps",
+      "title": "Two-application workspace",
+      "description": "The executable product is a modular monolith split into a Next.js web app and a FastAPI API. PostgreSQL is the system of record; browser requests either use server-side fetches or constrained same-origin proxy routes. The build-pack documents remain beside the implementation as the source of truth."
+    },
+    {
+      "file": "apps/web/src/app/layout.tsx",
+      "pattern": "export default async function RootLayout",
+      "title": "Web entry and session hydration",
+      "description": "Every page enters through this server layout. It reads the session before rendering AppShell, so identity and organization context are established centrally. The metadata still calls the product a foundation preview, which is stale now that the full analysis path exists."
+    },
+    {
+      "file": "apps/web/src/components/app-shell.tsx",
+      "pattern": "const navigation = [",
+      "title": "Workspace navigation",
+      "description": "The shell exposes Overview, Projects, Portfolio, Guide, and Status. It also renders the active organization and role. The footer and workspace label still say M0/Foundation preview, so the visible product state disagrees with the implemented milestones."
+    },
+    {
+      "file": "apps/web/src/features/auth/session.ts",
+      "pattern": "export async function readServerSession",
+      "title": "Server-side authentication boundary",
+      "description": "Protected pages obtain the session from the HTTP-only cookie and ask the API for the current user. Missing or invalid sessions become null and pages redirect to login. Authorization is repeated on the API; the UI is not treated as the security boundary."
+    },
+    {
+      "file": "apps/web/src/app/api/scanner/[...path]/route.ts",
+      "pattern": "async function forward(",
+      "title": "Constrained browser-to-API proxy",
+      "description": "Browser mutations pass through this same-origin route, which forwards only the session cookie, JSON bodies, safe response headers, and a bounded timeout. scopedScannerPath limits reachable resources. A gotcha is that query strings are not forwarded here; the Portfolio server page bypasses this proxy and calls the API directly."
+    },
+    {
+      "file": "apps/api/src/aos_api/main.py",
+      "pattern": "def create_app(",
+      "title": "FastAPI composition root",
+      "description": "create_app wires settings, the SQLAlchemy session factory, request IDs, safe error handlers, all routers, and live/ready health checks. Configuration failure leaves the app available for honest health/error responses rather than leaking secret-bearing startup exceptions."
+    },
+    {
+      "file": "apps/api/src/aos_api/routes_auth.py",
+      "pattern": "def tenant_context(",
+      "title": "Tenant context",
+      "description": "The active organization is derived from the authenticated server session and verified membership. Tenant-owned routes depend on this UUID rather than trusting an organization ID from the client, which is the central cross-tenant isolation mechanism."
+    },
+    {
+      "file": "apps/api/src/aos_api/intake.py",
+      "pattern": "def get_owned[ModelT: TenantOwned]",
+      "title": "Tenant-owned record lookup",
+      "description": "get_owned combines entity ID and organization ID in one query and returns a non-disclosing 404 on mismatch. Project, process, version, analysis, opportunity, and report flows reuse this guard; new routes should follow the same pattern."
+    },
+    {
+      "file": "apps/api/src/aos_api/routes_analysis.py",
+      "pattern": "def start_analysis(",
+      "title": "Analysis state machine entry",
+      "description": "One endpoint starts either extraction for an intake version or deterministic opportunity analysis for a reviewed version. Extraction is queued into FastAPI BackgroundTasks, while opportunity scoring completes synchronously. The in-process background mechanism is suitable for local MVP use but lacks durable production retries and queue recovery."
+    },
+    {
+      "file": "apps/api/src/aos_api/extraction.py",
+      "pattern": "def validate_extraction(",
+      "title": "AI output validation",
+      "description": "Model output passes JSON Schema, Pydantic, duplicate-step, and evidence-reference checks before persistence. Local development can use the deterministic demo parser; production refuses the demo provider. The OpenAI-compatible adapter retries three times but has no jitter or durable job retry."
+    },
+    {
+      "file": "apps/api/src/aos_api/routes_analysis.py",
+      "pattern": "def mark_reviewed(",
+      "title": "Human review gate",
+      "description": "Draft steps and systems stay editable until this transition marks a version reviewed. Opportunity analysis selects reviewed evidence, so model extraction cannot directly publish a score. The transition is tenant-scoped and audited."
+    },
+    {
+      "file": "apps/api/src/aos_api/opportunity.py",
+      "pattern": "def score_snapshot(",
+      "title": "Deterministic score and confidence",
+      "description": "The score snapshot calculates versioned dimension results, weighted total, evidence coverage, assessment confidence, result state, priority band, governance flag, and display axes from reviewed facts. Unknown inputs remain null and reduce coverage rather than becoming invented zeroes."
+    },
+    {
+      "file": "apps/api/src/aos_api/opportunity_engine.py",
+      "pattern": "def run_opportunity_analysis(",
+      "title": "Opportunity persistence orchestration",
+      "description": "The engine builds facts from PostgreSQL, detects pain points, derives a candidate, stores the immutable scoring snapshot, and persists recommendation/ROI evidence. Each rerun creates a new analysis history instead of mutating an earlier result."
+    },
+    {
+      "file": "apps/api/src/aos_api/routes_analysis.py",
+      "pattern": "def list_portfolio_opportunities(",
+      "title": "Organization portfolio query",
+      "description": "The route joins opportunities through analysis, process version, process, project, and score under organization scope, then returns ranked rows. Current filters and pagination run in Python after loading all tenant rows, and the query does not deliberately select the latest score if multiple score snapshots exist; both matter before the 1,000-opportunity performance target."
+    },
+    {
+      "file": "apps/web/src/app/portfolio/page.tsx",
+      "pattern": "export default async function PortfolioPage",
+      "title": "Portfolio UI",
+      "description": "The authenticated server page validates URL filters, fetches portfolio rows, renders a 5x5 impact/effort matrix, preserves unplaced items, and supplies an equivalent ranked list. It currently discards envelope metadata and project/process labels, has no category filter, and has no dedicated unit test because app pages are excluded from Vitest coverage."
+    },
+    {
+      "file": "apps/api/src/aos_api/report.py",
+      "pattern": "def build_report(",
+      "title": "Frozen executive report",
+      "description": "Reports snapshot stored process, pain-point, score, recommendation, and ROI facts, then render PDF without a live AI call. This gives reproducible exports and preserves tenant checks, but score/recommendation selection is not explicitly ordered when multiple records exist."
+    },
+    {
+      "file": ".github/workflows/ci.yml",
+      "pattern": "jobs:",
+      "title": "Automated quality gate",
+      "description": "CI installs locked dependencies, validates formatting/types/contracts, runs PostgreSQL integration tests, enforces frontend coverage, builds Next.js, runs desktop/mobile Playwright, and audits dependencies. Local verification currently passes frontend lint, typecheck, 73 unit tests, and all frontend coverage thresholds."
+    },
+    {
+      "file": "docs/project-management/BACKLOG.md",
+      "pattern": "- EPIC-11 Intake document upload",
+      "title": "Next product gap",
+      "description": "Document upload is the largest missing P0 vertical slice: the declared POST /processes/{processId}/documents route does not exist in runtime code. AI evaluation release gates, durable jobs, deployment images/manifests, observability, and stale M0 copy also remain before production readiness."
+    }
+  ]
+}

@@ -213,3 +213,35 @@ def test_audit_events_recorded_for_intake(client):
     ]
     assert entry is not None and entry.entity_type == "process_version"
     assert entry.metadata_json == {"version_no": 1}
+
+
+def test_document_upload_is_bounded_audited_and_tenant_scoped(client):
+    register(client, "a@corp.test")
+    project = create_project(client)
+    process = create_process(client, project["id"])
+    uploaded = client.post(
+        f"/processes/{process['id']}/documents",
+        files={"file": ("notes.txt", b"Copy invoice values into ERP.", "text/plain")},
+    )
+    assert uploaded.status_code == 201, uploaded.text
+    assert uploaded.json()["extracted_text_chars"] == len("Copy invoice values into ERP.")
+    documents = client.get(f"/processes/{process['id']}/documents")
+    assert documents.status_code == 200 and documents.json()[0]["filename"] == "notes.txt"
+    register(client, "b@other.test", org="Other")
+    assert client.get(f"/processes/{process['id']}/documents").status_code == 404
+
+
+def test_document_upload_rejects_unsupported_or_empty_content(client):
+    register(client, "a@corp.test")
+    project = create_project(client)
+    process = create_process(client, project["id"])
+    for filename, content, media_type, status in (
+        ("script.exe", b"data", "application/octet-stream", 415),
+        ("notes.txt", b"", "text/plain", 422),
+        ("bad.pdf", b"not a pdf", "application/pdf", 415),
+    ):
+        response = client.post(
+            f"/processes/{process['id']}/documents",
+            files={"file": (filename, content, media_type)},
+        )
+        assert response.status_code == status

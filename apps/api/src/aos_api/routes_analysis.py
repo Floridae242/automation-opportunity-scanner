@@ -5,9 +5,9 @@ import uuid
 from datetime import UTC, datetime
 from typing import Literal
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request, Response
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from aos_api.errors import ApiError
@@ -288,6 +288,91 @@ def list_analysis_opportunities(
             }
         )
     return output
+
+
+@analyses_router.get("/portfolio/opportunities")
+def list_portfolio_opportunities(
+    department: str | None = Query(default=None, max_length=200),
+    category: str | None = Query(default=None, min_length=1, max_length=64),
+    min_score: float | None = Query(default=None, ge=0, le=100),
+    min_confidence: int | None = Query(default=None, ge=0, le=100),
+    result_state: Literal["final", "provisional", "insufficient_evidence"] | None = None,
+    governance_review: bool | None = None,
+    page: int = Query(default=1, ge=1, le=10_000),
+    page_size: int = Query(default=50, ge=1, le=100),
+    org_id: uuid.UUID = Depends(tenant_context),
+    db: Session = Depends(db_session),
+) -> dict[str, object]:
+    """Tenant-scoped ranked portfolio; filters only stored reviewed facts."""
+    from aos_api.models import Opportunity, OpportunityScore, Project
+
+    latest_score_id = (
+        select(OpportunityScore.id)
+        .where(
+            OpportunityScore.opportunity_id == Opportunity.id,
+            OpportunityScore.organization_id == org_id,
+        )
+        .order_by(OpportunityScore.created_at.desc(), OpportunityScore.id.desc())
+        .limit(1)
+        .correlate(Opportunity)
+        .scalar_subquery()
+    )
+    statement = (
+        select(Opportunity, OpportunityScore, Process, Project)
+        .join(OpportunityScore, OpportunityScore.id == latest_score_id)
+        .join(AnalysisRun, AnalysisRun.id == Opportunity.analysis_run_id)
+        .join(ProcessVersion, ProcessVersion.id == AnalysisRun.process_version_id)
+        .join(Process, Process.id == ProcessVersion.process_id)
+        .join(Project, Project.id == Process.project_id)
+        .where(Opportunity.organization_id == org_id)
+        .order_by(OpportunityScore.total_score.desc().nullslast(), Opportunity.id)
+    )
+    if department is not None:
+        statement = statement.where(Project.department == department)
+    if category is not None:
+        statement = statement.where(Opportunity.scope_json["pain_categories"].contains([category]))
+    if min_score is not None:
+        statement = statement.where(OpportunityScore.total_score >= min_score)
+    if min_confidence is not None:
+        statement = statement.where(Opportunity.confidence >= min_confidence)
+    if result_state is not None:
+        statement = statement.where(Opportunity.result_state == result_state)
+    if governance_review is not None:
+        statement = statement.where(
+            func.coalesce(Opportunity.scope_json["governance_review"].as_boolean(), False).is_(
+                governance_review
+            )
+        )
+    total = db.scalar(select(func.count()).select_from(statement.order_by(None).subquery())) or 0
+    rows = db.execute(statement.offset((page - 1) * page_size).limit(page_size)).all()
+    items = []
+    for opportunity, score, process, project in rows:
+        scope = opportunity.scope_json if isinstance(opportunity.scope_json, dict) else {}
+        items.append(
+            {
+                "id": str(opportunity.id),
+                "title": opportunity.title,
+                "status": opportunity.status,
+                "result_state": opportunity.result_state,
+                "confidence": opportunity.confidence,
+                "priority_band": scope.get("priority_band"),
+                "total_score": score.total_score,
+                "scoring_version": score.scoring_version,
+                "axes": scope.get("axes"),
+                "governance_review": bool(scope.get("governance_review", False)),
+                "project_name": project.name,
+                "department": project.department,
+                "process_name": process.name,
+                "analysis_id": str(opportunity.analysis_run_id),
+                "pain_categories": scope.get("pain_categories", []),
+            }
+        )
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
 
 
 @analyses_router.get("/analyses/{analysisId}")
@@ -574,6 +659,16 @@ def read_opportunity(
     if score is None:
         raise ApiError(404, "NOT_FOUND", "The requested resource was not found.")
     dimensions = score.dimension_json if isinstance(score.dimension_json, dict) else {}
+    from aos_api.models import Recommendation, RoiScenario
+
+    advice = db.scalar(
+        select(Recommendation).where(Recommendation.opportunity_id == opportunity.id)
+    )
+    roi = db.scalar(
+        select(RoiScenario)
+        .where(RoiScenario.opportunity_id == opportunity.id)
+        .order_by(RoiScenario.created_at.desc())
+    )
     return {
         "id": str(opportunity.id),
         "analysis_run_id": str(opportunity.analysis_run_id),
@@ -590,4 +685,150 @@ def read_opportunity(
             "coverage": dimensions.get("coverage"),
             "confidence_version": dimensions.get("confidence_version"),
         },
+        "recommendation": None
+        if advice is None
+        else {
+            "patterns": advice.patterns_json,
+            "rationale": advice.rationale,
+            "prerequisites": advice.prerequisites_json,
+            "risks": advice.risks_json,
+            "human_control": advice.human_control,
+            "rejected_alternatives": advice.rejected_alternatives_json,
+            "confidence": advice.confidence,
+        },
+        "roi": roi.output_json if roi else None,
     }
+
+
+@opportunities_router.post("/analyses/{analysisId}/reports", status_code=201)
+def create_report(
+    analysisId: uuid.UUID,
+    org_id: uuid.UUID = Depends(tenant_context),
+    context: AuthContext = Depends(_writer),
+    db: Session = Depends(db_session),
+) -> dict[str, object]:
+    from aos_api.report import build_report
+
+    run = get_owned(db, AnalysisRun, org_id, analysisId)
+    report = build_report(db, org_id, context.user.id, run)
+    return {"report_id": str(report.id), "status": report.status}
+
+
+@opportunities_router.get("/analyses/{analysisId}/report")
+def read_report(
+    analysisId: uuid.UUID,
+    org_id: uuid.UUID = Depends(tenant_context),
+    db: Session = Depends(db_session),
+) -> dict[str, object]:
+    from aos_api.models import Report
+
+    get_owned(db, AnalysisRun, org_id, analysisId)
+    report = db.scalar(
+        select(Report)
+        .where(Report.analysis_run_id == analysisId, Report.organization_id == org_id)
+        .order_by(Report.created_at.desc())
+        .limit(1)
+    )
+    if report is None:
+        raise ApiError(404, "NOT_FOUND", "No report has been exported for this analysis yet.")
+    return {"report_id": str(report.id), "status": report.status, "snapshot": report.snapshot_json}
+
+
+@opportunities_router.get("/reports/{reportId}/pdf")
+def report_pdf(
+    reportId: uuid.UUID,
+    org_id: uuid.UUID = Depends(tenant_context),
+    db: Session = Depends(db_session),
+) -> Response:
+    from fastapi.responses import Response
+
+    from aos_api.models import Report
+    from aos_api.pdf import render_pdf
+
+    report = get_owned(db, Report, org_id, reportId)
+    snapshot = report.snapshot_json if isinstance(report.snapshot_json, dict) else {}
+    blocks: list[tuple[str, list[str]]] = [("Executive summary", [])]
+    blocks[0] = (
+        "Executive summary",
+        [
+            f"Process: {snapshot.get('process') or 'unknown'} "
+            f"(project {snapshot.get('project') or 'unknown'}, version "
+            f"{snapshot.get('source_version_no')}, {snapshot.get('review_status')}).",
+            (
+                f"Report schema {snapshot.get('schema_version')} generated "
+                f"{snapshot.get('generated_at') or ''}"
+            ).strip(),
+        ],
+    )
+    pain = snapshot.get("pain_points") or []
+    if isinstance(pain, list) and pain:
+        blocks.append(
+            (
+                "Pain points",
+                [
+                    f"- [{p.get('category')}] {p.get('description')} (severity {p.get('severity')})"
+                    for p in pain
+                    if isinstance(p, dict)
+                ],
+            )
+        )
+    opportunities = snapshot.get("opportunities") or []
+    if isinstance(opportunities, list):
+        for index, opportunity in enumerate(opportunities, start=1):
+            if not isinstance(opportunity, dict):
+                continue
+            lines = [
+                f"- Score {opportunity.get('score')} "
+                f"({opportunity.get('scoring_version')}) on "
+                f"{opportunity.get('result_state')} evidence; confidence "
+                f"{opportunity.get('confidence')}.",
+                f"- Band: {opportunity.get('priority_band')}"
+                + (
+                    " | GOVERNANCE REVIEW SUGGESTED" if opportunity.get("governance_review") else ""
+                ),
+            ]
+            recommendation = opportunity.get("recommendation")
+            if isinstance(recommendation, dict):
+                lines.append(f"- Recommendation: {', '.join(recommendation.get('patterns') or [])}")
+                lines.append(f"  {recommendation.get('rationale')}")
+                lines.append(f"  Human control: {recommendation.get('human_control')}")
+            roi = opportunity.get("roi")
+            if isinstance(roi, dict) and roi.get("available"):
+                for scenario in roi.get("scenarios") or []:
+                    if isinstance(scenario, dict):
+                        lines.append(
+                            f"- Time saving: {scenario.get('net_hours_saved_month')} h/month "
+                            f"at {scenario.get('automation_rate')} automation "
+                            f"({scenario.get('stated_by')})."
+                        )
+                monetary = roi.get("monetary")
+                if isinstance(monetary, dict):
+                    lines.append(
+                        f"- Monetary ROI: {monetary.get('roi_percent')}% "
+                        f"({monetary.get('currency')}), payback "
+                        f"{monetary.get('payback_months')} months — best scenario; verify costs."
+                    )
+                else:
+                    lines.append(
+                        "- Monetary ROI not calculated: "
+                        f"missing {', '.join(roi.get('monetary_missing') or ['cost evidence'])}."
+                    )
+            blocks.append((f"{index}. {opportunity.get('title')}", lines))
+    blocks.append(
+        (
+            "Method",
+            [
+                "Scores are deterministic (rules over reviewed facts). Unknown values remain",
+                "“not provided” and never appear as zero. Labor savings are freed",
+                "capacity, not automatic headcount reduction.",
+            ],
+        )
+    )
+    document = render_pdf(
+        f"Automation Opportunity Report — {snapshot.get('process') or 'process'}", blocks
+    )
+    return Response(
+        content=document,
+        media_type="application/pdf",
+        headers={"content-disposition": f'attachment; filename="report-{reportId}.pdf"'},
+    )

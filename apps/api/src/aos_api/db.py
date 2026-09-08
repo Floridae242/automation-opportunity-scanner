@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Protocol
 
@@ -9,7 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from aos_api.config import Settings
 
-API_ROOT = Path(__file__).resolve().parents[2]
+API_ROOT = Path(os.environ.get("AOS_API_ROOT", Path(__file__).resolve().parents[2]))
 
 
 def migration_config() -> Config:

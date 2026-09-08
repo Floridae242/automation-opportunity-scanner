@@ -22,4 +22,4 @@
 - audit_logs(id, organization_id, actor_user_id, action, entity_type, entity_id, metadata_json, created_at)
 
 ## Index priorities
-organization_id on all tenant data; process/project foreign keys; analysis_run status; opportunities score/reporting filters; created_at for history.
+organization_id on all tenant data; process/project foreign keys; analysis_run status; opportunities score/reporting filters; created_at for history. Portfolio ranking uses composite indexes on projects(organization_id, department), opportunities(organization_id, analysis_run_id), and opportunity_scores(organization_id, opportunity_id, created_at).

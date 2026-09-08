@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ExportReportButton } from "@/features/portfolio/export-report";
 import { readServerSession } from "@/features/auth/session";
 import { fetchWorkspaceJson } from "@/features/intake/workspace-data";
 import {
@@ -112,6 +113,9 @@ export default async function AnalysisPage({
           </p>
         </div>
       </section>
+      <div className="workflow-section">
+        <ExportReportButton analysisId={id} />
+      </div>
       <section aria-label="Pain points" className="workflow-section">
         <h2 className="quiet-label">PAIN POINTS</h2>
         {overview.pain_points.length === 0 ? (

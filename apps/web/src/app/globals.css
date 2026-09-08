@@ -1089,6 +1089,13 @@ main:focus {
   background: var(--surface);
 }
 
+/* ---------- report ---------- */
+.report-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 /* ---------- not found ---------- */
 .empty-icon-large {
   width: 64px;

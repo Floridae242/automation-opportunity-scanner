@@ -62,6 +62,12 @@ class OpportunityFacts:
     change_complexity: float | None
     security_compliance_effort: float | None
     exception_handling_complexity: float | None
+    realistic_automation_rate: float | None = None
+    exception_rate: float | None = None
+    loaded_hourly_cost: float | None = None
+    currency: str | None = None
+    monthly_operating_cost: float | None = None
+    implementation_cost: float | None = None
     fact_source_qualities: tuple[int, ...] = field(default_factory=tuple)
     reviewed: bool = False
 

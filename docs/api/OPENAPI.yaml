@@ -9,13 +9,13 @@ paths:
     post:
       summary: Create account with owner organization and session (ADR-012)
       responses:
-        '201': { description: Account created, session cookie set }
+        '201': { description: "Account created; session cookie set" }
         '409': { description: Email in use }
   /auth/login:
     post:
       summary: Start a session
       responses:
-        '200': { description: Authenticated, session cookie set }
+        '200': { description: "Authenticated; session cookie set" }
         '401': { description: Invalid credentials }
         '429': { description: Too many attempts }
   /auth/logout:
@@ -45,6 +45,11 @@ paths:
       responses:
         '201': { description: Created }
   /projects/{projectId}:
+    parameters:
+      - in: path
+        name: projectId
+        required: true
+        schema: { type: string, format: uuid }
     get:
       summary: Read project with its processes
       responses:
@@ -66,6 +71,11 @@ paths:
       responses:
         '201': { description: Created }
   /processes/{processId}:
+    parameters:
+      - in: path
+        name: processId
+        required: true
+        schema: { type: string, format: uuid }
     get:
       summary: Read process with version history
       responses:
@@ -106,39 +116,97 @@ paths:
           schema: { type: string, format: uuid }
       responses:
         '200': { description: OK }
+  /analyses/{analysisId}/report:
+    get:
+      summary: Read the latest stored report snapshot for an analysis
+      parameters:
+        - in: path
+          name: analysisId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Report snapshot }
+        '404': { description: No report in tenant scope }
   /process-versions/{versionId}:
+    parameters:
+      - in: path
+        name: versionId
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      summary: Read a process version with reviewed steps, systems, and evidence
+      responses:
+        '200': { description: OK }
     patch:
       summary: Edit draft process version
       responses:
         '200': { description: Updated }
   /process-versions/{versionId}/review:
+    parameters:
+      - in: path
+        name: versionId
+        required: true
+        schema: { type: string, format: uuid }
     post:
       summary: Mark process version reviewed
       responses:
         '200': { description: Reviewed }
   /analyses/{analysisId}/opportunities:
+    parameters:
+      - in: path
+        name: analysisId
+        required: true
+        schema: { type: string, format: uuid }
     get:
       summary: List scored opportunities with band, confidence, and matrix axes
       responses:
         '200': { description: OK }
   /opportunities/{opportunityId}:
+    parameters:
+      - in: path
+        name: opportunityId
+        required: true
+        schema: { type: string, format: uuid }
     get:
       summary: Opportunity detail with per-dimension scores, evidence, and versioned score snapshot (ROI/recommendation added in M5)
       responses:
         '200': { description: OK }
+  /portfolio/opportunities:
+    get:
+      summary: List tenant-scoped scored opportunities for portfolio triage
+      parameters:
+        - { in: query, name: department, schema: { type: string } }
+        - { in: query, name: category, schema: { type: string } }
+        - { in: query, name: min_score, schema: { type: number, minimum: 0, maximum: 100 } }
+        - { in: query, name: min_confidence, schema: { type: integer, minimum: 0, maximum: 100 } }
+        - { in: query, name: result_state, schema: { type: string, enum: [final, provisional, insufficient_evidence] } }
+        - { in: query, name: governance_review, schema: { type: boolean } }
+        - { in: query, name: page, schema: { type: integer, minimum: 1 } }
+        - { in: query, name: page_size, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200': { description: Ranked portfolio page }
   /analyses/{analysisId}/reports:
+    parameters:
+      - in: path
+        name: analysisId
+        required: true
+        schema: { type: string, format: uuid }
     post:
       summary: Create report snapshot
       responses:
-        '202': { description: Accepted }
+        '201': { description: Report snapshot created }
   /processes/{processId}/documents:
+    parameters:
+      - in: path
+        name: processId
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      summary: List sanitized metadata for process documents
+      responses:
+        '200': { description: Document metadata }
     post:
-      summary: Upload process document as untrusted intake evidence (FR-021, ADR-010)
-      parameters:
-        - in: path
-          name: processId
-          required: true
-          schema: { type: string, format: uuid }
+      summary: Upload UTF-8 text or a readable PDF as untrusted process evidence
       requestBody:
         required: true
         content:
@@ -147,12 +215,9 @@ paths:
               type: object
               required: [file]
               properties:
-                file:
-                  type: string
-                  format: binary
-                  description: Text or PDF within NFR-S03 size/type limits; parsed as untrusted content
+                file: { type: string, format: binary }
       responses:
-        '201': { description: Document stored as intake evidence }
+        '201': { description: Document evidence accepted }
         '413': { description: File too large }
         '415': { description: Unsupported media type }
   /reports/{reportId}/pdf:
@@ -170,6 +235,17 @@ paths:
             application/pdf:
               schema: { type: string, format: binary }
         '404': { description: Not found in tenant scope }
+  /health/live:
+    get:
+      summary: Liveness probe
+      responses:
+        '200': { description: Application process is live }
+  /health/ready:
+    get:
+      summary: Readiness probe including database connectivity
+      responses:
+        '200': { description: Ready }
+        '503': { description: Not ready }
 components:
   schemas:
     AnalysisAccepted:

@@ -1,0 +1,15 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    environment:
+      APP_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?Set managed PostgreSQL URL}
+      AI_PROVIDER: ${AI_PROVIDER:?Set provider}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped

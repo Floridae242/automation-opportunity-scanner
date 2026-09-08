@@ -1,5 +1,33 @@
 export type ApiResult = { ok: true } | { ok: false; message: string };
 
+export async function uploadScannerFile(
+  path: string,
+  file: File,
+): Promise<ApiResult> {
+  try {
+    const form = new FormData();
+    form.set("file", file);
+    const response = await fetch(`/api/scanner/${path}`, {
+      method: "POST",
+      body: form,
+    });
+    if (response.ok) return { ok: true };
+    const payload = await response.json().catch(() => null);
+    return {
+      ok: false,
+      message:
+        typeof payload?.error?.message === "string"
+          ? payload.error.message
+          : "The document could not be uploaded. Please try again.",
+    };
+  } catch {
+    return {
+      ok: false,
+      message: "We could not reach the workspace service. Try again.",
+    };
+  }
+}
+
 export async function callScannerApi(
   method: "GET" | "POST" | "PATCH",
   path: string,

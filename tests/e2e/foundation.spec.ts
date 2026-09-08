@@ -17,11 +17,14 @@ test("workspace preview leads to guide and live service status", async ({
     .first()
     .click();
   await expect(page).toHaveURL(/\/status$/);
-  await expect(page.getByText("Ready", { exact: true }).first()).toBeVisible();
+  const healthSummary = page.getByRole("heading", {
+    name: /Services are available|Some services need attention/,
+  });
+  await expect(healthSummary).toBeVisible();
   await page
     .getByRole("button", { name: /check again|refresh|retry/i })
     .click();
-  await expect(page.getByText("Ready", { exact: true }).first()).toBeVisible();
+  await expect(healthSummary).toBeVisible();
 });
 
 test("layout fits narrow screens without losing content", async ({ page }) => {

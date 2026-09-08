@@ -8,11 +8,11 @@ export default function StatusPage() {
         <h1>
           A clear view of
           <br />
-          <span>the foundation.</span>
+          <span>the workspace.</span>
         </h1>
         <p className="intro-description">
-          Check the services supporting this local preview. Each check reflects
-          the current connection, with a straightforward path to try again.
+          Check the services supporting this workspace. Each check reflects the
+          current connection, with a straightforward path to try again.
         </p>
       </section>
       <StatusPanel />
@@ -20,8 +20,8 @@ export default function StatusPage() {
         <h2>What this check means</h2>
         <p>
           Service availability confirms the application can reach its API and
-          that the API can reach its database. It does not enable assessment
-          creation, sign-in, analysis, or reports in this foundation preview.
+          that the API can reach its database. It does not prove that every
+          external AI provider or report export dependency is available.
         </p>
       </section>
     </div>

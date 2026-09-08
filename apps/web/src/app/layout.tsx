@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     template: "%s — Opportunity Scanner",
   },
   description:
-    "An evidence-first workspace for understanding processes and investigating automation opportunities. Foundation preview.",
+    "An evidence-first workspace for reviewing processes and prioritizing automation opportunities.",
 };
 
 export default async function RootLayout({

@@ -50,20 +50,20 @@ export default function Overview() {
         >
           <div className="section-heading compact">
             <h2 id="assessments-heading">Your assessments</h2>
-            <span className="outline-tag">Preview</span>
+            <span className="outline-tag">Workspace</span>
           </div>
           <div className="empty-state">
             <span className="empty-icon">
               <Icon name="folder" size={30} />
             </span>
             <div>
-              <h3>No assessments yet</h3>
+              <h3>Start with a process</h3>
               <p>
-                This foundation preview introduces the workspace. Sign-in and
-                assessment creation are planned for the next milestones.
+                Create a project, add a process, and capture the evidence your
+                team can review before prioritizing automation.
               </p>
-              <Link href="/guide" className="text-link">
-                See what to prepare
+              <Link href="/projects" className="text-link">
+                Open projects
                 <Icon name="arrow" size={16} />
               </Link>
             </div>

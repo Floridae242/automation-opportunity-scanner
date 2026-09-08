@@ -187,6 +187,34 @@ def test_cross_tenant_opportunities_denied(client):
     assert client.get(f"/opportunities/{opportunity_id}").status_code == 404
 
 
+def test_portfolio_is_tenant_scoped_and_filters_stored_scores(client):
+    process = reviewed_process(client)
+    client.post(f"/processes/{process['id']}/analyses")
+    response = client.get("/portfolio/opportunities?min_score=1&min_confidence=1&page_size=1")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] == 1
+    assert payload["page"] == 1 and payload["page_size"] == 1
+    item = payload["items"][0]
+    assert item["project_name"] == "Ops" and item["process_name"] == "Invoices"
+    assert item["total_score"] >= 1 and item["axes"]["impact"] is not None
+    assert (
+        client.get("/portfolio/opportunities?category=repetitive_manual_work").json()["total"] == 1
+    )
+    assert client.get("/portfolio/opportunities?category=missing_evidence").json()["total"] == 0
+    assert client.get("/portfolio/opportunities?min_score=101").status_code == 422
+    client.post(
+        "/auth/register",
+        json={
+            "email": "portfolio@other.test",
+            "password": "strong-pass-123",
+            "display_name": "Other",
+            "organization_name": "Other",
+        },
+    )
+    assert client.get("/portfolio/opportunities").json()["items"] == []
+
+
 def test_vector_engine_matches_evals_golden_exactly():
     import json
 

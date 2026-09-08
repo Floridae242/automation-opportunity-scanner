@@ -8,6 +8,7 @@
 | FR-012 Score | OPPORTUNITY_SCORING_MODEL | GET /analyses/:id/opportunities | unit scoring golden vectors |
 | FR-014 Recommendation | RECOMMENDATION_RULES | analysis result | AI/rule eval |
 | FR-015 ROI | ROI_CALCULATION | opportunity detail | unit ROI boundaries |
+| FR-016 Portfolio matrix | OPPORTUNITY_SCORING_MODEL | GET /portfolio/opportunities | portfolio integration and UI tests |
 | FR-020 Tenant isolation | MULTI_TENANCY | all tenant routes | authorization integration suite |
 
 Update this matrix when endpoints or ownership change.

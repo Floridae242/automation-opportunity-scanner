@@ -94,6 +94,99 @@ export default async function OpportunityPage({
           </table>
         </div>
       </section>
+      {opportunity.recommendation && (
+        <section aria-label="Recommendation" className="workflow-section">
+          <h2 className="quiet-label">RECOMMENDED PATTERN</h2>
+          <article className="guide-card">
+            <header className="principle-heading">
+              <h3>{opportunity.recommendation.patterns.join(" + ")}</h3>
+              <span className="evidence-chip">
+                confidence {opportunity.recommendation.confidence}
+              </span>
+            </header>
+            <p>{opportunity.recommendation.rationale}</p>
+            <h4>Prerequisites</h4>
+            <ul className="check-list compact">
+              {opportunity.recommendation.prerequisites.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <h4>Key risks</h4>
+            <ul className="check-list compact">
+              {opportunity.recommendation.risks.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <p className="margin-note">
+              Human control: {opportunity.recommendation.human_control}
+            </p>
+            <details>
+              <summary>Rejected alternatives</summary>
+              <ul>
+                {opportunity.recommendation.rejected_alternatives.map((alt) => (
+                  <li key={alt.pattern}>
+                    <strong>{alt.pattern}</strong> — {alt.why}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </article>
+        </section>
+      )}
+      {opportunity.roi && (
+        <section aria-label="Time saving and ROI" className="workflow-section">
+          <h2 className="quiet-label">TIME SAVING · ROI</h2>
+          {opportunity.roi.available ? (
+            <article className="guide-card">
+              <table className="score-table">
+                <thead>
+                  <tr>
+                    <th>Scenario</th>
+                    <th>Net hours saved / month</th>
+                    <th>Assumption source</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(opportunity.roi.scenarios ?? []).map((scenario) => (
+                    <tr key={scenario.automation_rate}>
+                      <td>
+                        {Math.round(scenario.automation_rate * 100)}% automated
+                      </td>
+                      <td>{scenario.net_hours_saved_month} h</td>
+                      <td>{scenario.stated_by}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {opportunity.roi.monetary ? (
+                <p>
+                  Monetary: ROI {opportunity.roi.monetary.roi_percent}% ·
+                  payback{" "}
+                  {opportunity.roi.monetary.payback_months ?? "beyond horizon"}{" "}
+                  months ({opportunity.roi.monetary.currency}, best scenario —
+                  verify with owner).
+                </p>
+              ) : (
+                <p className="margin-note">
+                  Monetary ROI not calculated — missing{" "}
+                  {(opportunity.roi.monetary_missing ?? []).join(", ") ||
+                    "cost evidence"}
+                  .
+                </p>
+              )}
+              <p className="status-footnote">
+                {opportunity.roi.assumptions_note}
+              </p>
+            </article>
+          ) : (
+            <p className="intro-description">
+              Time saving unavailable — still missing:{" "}
+              {(opportunity.roi.missing ?? []).join(", ")}. The system keeps it
+              as “Not provided” instead of guessing.
+            </p>
+          )}
+        </section>
+      )}
       <section aria-label="Scope" className="workflow-section">
         <h2 className="quiet-label">SCOPE</h2>
         <div className="evidence-rail">

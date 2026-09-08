@@ -7,28 +7,33 @@ from aos_api.config import ROOT
 from aos_api.main import create_app
 
 
-def test_m3_openapi_contract():
+def test_m5_openapi_contract():
     schema = create_app().openapi()
     validate(schema)
     assert set(schema["paths"]) == {
-        "/health/live",
-        "/health/ready",
-        "/auth/register",
+        "/analyses/{analysisId}",
+        "/analyses/{analysisId}/opportunities",
+        "/analyses/{analysisId}/report",
+        "/analyses/{analysisId}/reports",
+        "/auth/active-organization",
         "/auth/login",
         "/auth/logout",
         "/auth/me",
-        "/auth/active-organization",
+        "/auth/register",
+        "/health/live",
+        "/health/ready",
+        "/opportunities/{opportunityId}",
+        "/portfolio/opportunities",
+        "/process-versions/{versionId}",
+        "/process-versions/{versionId}/review",
+        "/processes/{processId}",
+        "/processes/{processId}/analyses",
+        "/processes/{processId}/documents",
+        "/processes/{processId}/intake",
         "/projects",
         "/projects/{projectId}",
         "/projects/{projectId}/processes",
-        "/processes/{processId}",
-        "/processes/{processId}/intake",
-        "/processes/{processId}/analyses",
-        "/analyses/{analysisId}",
-        "/process-versions/{versionId}",
-        "/process-versions/{versionId}/review",
-        "/analyses/{analysisId}/opportunities",
-        "/opportunities/{opportunityId}",
+        "/reports/{reportId}/pdf",
     }
 
 

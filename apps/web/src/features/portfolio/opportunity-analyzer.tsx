@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { callScannerApi } from "@/features/intake/client-api";
 
 export function OpportunityAnalyzer({ processId }: { processId: string }) {
   const router = useRouter();

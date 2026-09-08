@@ -49,7 +49,6 @@ export function LoginForm() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setPending(true);
     setError(null);
     const form = new FormData(event.currentTarget);
     const payload = Object.fromEntries(form.entries());
@@ -57,6 +56,7 @@ export function LoginForm() {
       setError("Password must be at least 10 characters.");
       return;
     }
+    setPending(true);
     try {
       const response = await fetch(
         `/api/auth/${mode === "signin" ? "login" : "register"}`,

@@ -79,6 +79,9 @@ class Membership(Base):
 
 class Project(Base):
     __tablename__ = "projects"
+    __table_args__ = (
+        Index("ix_projects_organization_department", "organization_id", "department"),
+    )
     id: Mapped[UUID] = mapped_column(primary_key=True)
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
     name: Mapped[str] = mapped_column(String(200))
@@ -159,6 +162,28 @@ class Evidence(Base):
     confidence: Mapped[str | None] = mapped_column(String(8))
 
 
+class ProcessDocument(Base):
+    __tablename__ = "process_documents"
+    __table_args__ = (
+        Index(
+            "ix_process_documents_organization_process_created",
+            "organization_id",
+            "process_id",
+            "created_at",
+        ),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
+    process_id: Mapped[UUID] = mapped_column(ForeignKey("processes.id"), index=True)
+    filename: Mapped[str] = mapped_column(String(255))
+    media_type: Mapped[str] = mapped_column(String(64))
+    byte_size: Mapped[int] = mapped_column(Integer)
+    sha256: Mapped[str] = mapped_column(String(64))
+    extracted_text: Mapped[str] = mapped_column(Text)
+    created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class System(Base):
     __tablename__ = "systems"
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -202,6 +227,9 @@ class PainPoint(Base):
 
 class Opportunity(Base):
     __tablename__ = "opportunities"
+    __table_args__ = (
+        Index("ix_opportunities_organization_analysis", "organization_id", "analysis_run_id"),
+    )
     id: Mapped[UUID] = mapped_column(primary_key=True)
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
     analysis_run_id: Mapped[UUID] = mapped_column(ForeignKey("analysis_runs.id"), index=True)
@@ -216,6 +244,14 @@ class Opportunity(Base):
 
 class OpportunityScore(Base):
     __tablename__ = "opportunity_scores"
+    __table_args__ = (
+        Index(
+            "ix_opportunity_scores_organization_opportunity_created",
+            "organization_id",
+            "opportunity_id",
+            "created_at",
+        ),
+    )
     id: Mapped[UUID] = mapped_column(primary_key=True)
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
     opportunity_id: Mapped[UUID] = mapped_column(ForeignKey("opportunities.id"), index=True)
@@ -225,4 +261,47 @@ class OpportunityScore(Base):
     )
     confidence_score: Mapped[int] = mapped_column()
     scoring_version: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Recommendation(Base):
+    __tablename__ = "recommendations"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
+    opportunity_id: Mapped[UUID] = mapped_column(ForeignKey("opportunities.id"), index=True)
+    patterns_json: Mapped[list[object]] = mapped_column(JSONB, server_default=text("'[]'::jsonb"))
+    rationale: Mapped[str] = mapped_column(Text)
+    prerequisites_json: Mapped[list[object]] = mapped_column(
+        JSONB, server_default=text("'[]'::jsonb")
+    )
+    risks_json: Mapped[list[object]] = mapped_column(JSONB, server_default=text("'[]'::jsonb"))
+    human_control: Mapped[str] = mapped_column(Text)
+    rejected_alternatives_json: Mapped[list[object]] = mapped_column(
+        JSONB, server_default=text("'[]'::jsonb")
+    )
+    confidence: Mapped[str] = mapped_column(String(8))
+
+
+class RoiScenario(Base):
+    __tablename__ = "roi_scenarios"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
+    opportunity_id: Mapped[UUID] = mapped_column(ForeignKey("opportunities.id"), index=True)
+    input_json: Mapped[dict[str, object]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
+    output_json: Mapped[dict[str, object]] = mapped_column(
+        JSONB, server_default=text("'{}'::jsonb")
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Report(Base):
+    __tablename__ = "reports"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
+    analysis_run_id: Mapped[UUID] = mapped_column(ForeignKey("analysis_runs.id"), index=True)
+    status: Mapped[str] = mapped_column(String(16), server_default=text("'ready'"))
+    snapshot_json: Mapped[dict[str, object]] = mapped_column(
+        JSONB, server_default=text("'{}'::jsonb")
+    )
+    storage_key: Mapped[str | None] = mapped_column(String(200))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -26,7 +26,7 @@ describe("foundation workspace", () => {
     expect(screen.getByRole("main")).toHaveTextContent("Page content");
   });
 
-  it("shows a truthful preview with a clearly illustrative workflow", () => {
+  it("shows the current workspace entry point and assessment workflow", () => {
     render(<Overview />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
       "Make the process clear.",
@@ -34,7 +34,7 @@ describe("foundation workspace", () => {
     expect(
       screen.getByRole("heading", { name: "How assessment works" }),
     ).toBeVisible();
-    expect(screen.getByText("No assessments yet")).toBeVisible();
+    expect(screen.getByText("Start with a process")).toBeVisible();
     expect(
       screen.getByRole("link", { name: /Read the assessment guide/ }),
     ).toHaveAttribute("href", "/guide");
@@ -54,8 +54,9 @@ describe("foundation workspace", () => {
     expect(
       screen.getByRole("heading", { name: "Review before you prioritize" }),
     ).toBeVisible();
-    expect(
-      screen.getByRole("link", { name: /View workspace status/ }),
-    ).toHaveAttribute("href", "/status");
+    expect(screen.getByRole("link", { name: /Open projects/ })).toHaveAttribute(
+      "href",
+      "/projects",
+    );
   });
 });

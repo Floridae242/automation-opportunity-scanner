@@ -43,6 +43,7 @@ def test_not_ready_and_invalid_request_id():
 
 def test_database_configuration_requires_postgres(monkeypatch):
     monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.delenv("APP_ENV", raising=False)
     with pytest.raises(ValidationError):
         Settings(_env_file=None)
     with pytest.raises(ValidationError):

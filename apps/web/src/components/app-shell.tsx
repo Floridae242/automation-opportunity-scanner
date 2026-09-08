@@ -10,6 +10,7 @@ import { Icon } from "./icon";
 const navigation = [
   { href: "/", label: "Overview", icon: "grid" },
   { href: "/projects", label: "Projects", icon: "folder" },
+  { href: "/portfolio", label: "Portfolio", icon: "grid" },
   { href: "/guide", label: "Assessment guide", icon: "book" },
   { href: "/status", label: "Workspace status", icon: "pulse" },
 ] as const;
@@ -63,7 +64,6 @@ export function AppShell({
   session?: AuthSession | null;
 }) {
   const pathname = usePathname();
-  const current = navigation.find((item) => item.href === pathname);
   const section =
     pathname === "/projects"
       ? "Projects"
@@ -71,11 +71,13 @@ export function AppShell({
         ? "Project detail"
         : pathname.startsWith("/processes/")
           ? "Process intake"
-          : pathname.startsWith("/analyses/")
-            ? "Opportunity analysis"
-            : pathname.startsWith("/opportunities/")
-              ? "Opportunity detail"
-              : (PAGE_LABELS[pathname] ?? "Page not found");
+          : pathname === "/portfolio"
+            ? "Portfolio"
+            : pathname.startsWith("/analyses/")
+              ? "Opportunity analysis"
+              : pathname.startsWith("/opportunities/")
+                ? "Opportunity detail"
+                : (PAGE_LABELS[pathname] ?? "Page not found");
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">
@@ -102,7 +104,7 @@ export function AppShell({
         <div className="workspace-label">
           <span className="workspace-monogram">OS</span>
           <span>
-            Process studio<small>Workspace preview</small>
+            Process studio<small>Evidence workspace</small>
           </span>
         </div>
         <p className="nav-caption">WORKSPACE</p>
@@ -134,7 +136,7 @@ export function AppShell({
         </div>
         <div className="sidebar-foot">
           <span className="small-dot" />
-          Foundation preview<span className="version">M0</span>
+          Evidence-first analysis<span className="version">MVP</span>
         </div>
       </aside>
       <div className="page-frame">

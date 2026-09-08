@@ -63,6 +63,8 @@ jobs:
       - name: Backend unit, contract and PostgreSQL integration tests
         working-directory: apps/api
         run: .venv/bin/pytest
+      - name: Offline AI evaluation
+        run: apps/api/.venv/bin/python apps/api/scripts/run_ai_evals.py
       - name: Frontend tests and production build
         run: |
           npm run test:coverage
@@ -73,7 +75,7 @@ jobs:
       - name: Browser checks
         run: |
           npx playwright install --with-deps chromium
-          npm run test:e2e
+          npx playwright test
       - name: Dependency security checks
         run: |
           npm audit --audit-level=high

@@ -38,6 +38,8 @@ export type OpportunityDetail = Readonly<{
   result_state: OpportunityRow["result_state"];
   confidence: number;
   scope: Record<string, unknown>;
+  recommendation: Recommendation | null;
+  roi: RoiOutcome | null;
   score: Readonly<{
     total: number | null;
     scoring_version: string;
@@ -180,5 +182,120 @@ export function parseOpportunityDetail(
           ? score.confidence_version
           : "",
     },
+    recommendation: parseRecommendation(value.recommendation),
+    roi: parseRoi(value.roi),
   };
+}
+
+export type Recommendation = Readonly<{
+  patterns: readonly string[];
+  rationale: string;
+  prerequisites: readonly string[];
+  risks: readonly string[];
+  human_control: string;
+  rejected_alternatives: readonly { pattern: string; why: string }[];
+  confidence: "low" | "medium" | "high";
+}>;
+
+export type RoiOutcome = Readonly<{
+  available: boolean;
+  missing?: readonly string[];
+  scenarios?: readonly {
+    automation_rate: number;
+    exception_rate: number;
+    net_hours_saved_month: number;
+    stated_by: string;
+    monthly_labor_benefit?: number;
+  }[];
+  monetary?: {
+    annual_net_benefit: number;
+    roi_percent: number;
+    payback_months: number | null;
+    currency: string;
+  } | null;
+  monetary_missing?: readonly string[];
+  assumptions_note?: string;
+}>;
+
+function parseRecommendation(raw: unknown): Recommendation | null {
+  if (raw === null) return null;
+  if (
+    !isRecord(raw) ||
+    !Array.isArray(raw.patterns) ||
+    !raw.patterns.every((pattern) => typeof pattern === "string") ||
+    typeof raw.rationale !== "string" ||
+    !Array.isArray(raw.prerequisites) ||
+    !raw.prerequisites.every((item) => typeof item === "string") ||
+    !Array.isArray(raw.risks) ||
+    !raw.risks.every((item) => typeof item === "string") ||
+    typeof raw.human_control !== "string" ||
+    !Array.isArray(raw.rejected_alternatives) ||
+    !raw.rejected_alternatives.every(
+      (item) =>
+        isRecord(item) &&
+        typeof item.pattern === "string" &&
+        typeof item.why === "string",
+    ) ||
+    !["low", "medium", "high"].includes(String(raw.confidence))
+  )
+    return null;
+  return raw as unknown as Recommendation;
+}
+
+function parseRoi(raw: unknown): RoiOutcome | null {
+  if (raw === null) return null;
+  if (!isRecord(raw) || typeof raw.available !== "boolean") return null;
+  if (raw.scenarios !== undefined && !Array.isArray(raw.scenarios)) return null;
+  if (
+    Array.isArray(raw.scenarios) &&
+    !raw.scenarios.every(
+      (item) =>
+        isRecord(item) &&
+        typeof item.automation_rate === "number" &&
+        Number.isFinite(item.automation_rate) &&
+        typeof item.exception_rate === "number" &&
+        Number.isFinite(item.exception_rate) &&
+        typeof item.net_hours_saved_month === "number" &&
+        Number.isFinite(item.net_hours_saved_month) &&
+        typeof item.stated_by === "string" &&
+        (item.monthly_labor_benefit === undefined ||
+          (typeof item.monthly_labor_benefit === "number" &&
+            Number.isFinite(item.monthly_labor_benefit))),
+    )
+  )
+    return null;
+  return raw as unknown as RoiOutcome;
+}
+
+export type ReportSnapshot = Readonly<{
+  report_id: string;
+  schema_version: string;
+  process: string | null;
+  project: string | null;
+  source_version_no: number | null;
+  review_status: string | null;
+  pain_points: readonly {
+    category: string;
+    description: string;
+    severity: string;
+  }[];
+  opportunities: readonly Record<string, unknown>[];
+}>;
+
+export function parseReportEnvelope(value: unknown): ReportSnapshot | null {
+  if (!isRecord(value) || !isRecord(value.snapshot)) return null;
+  if (typeof value.report_id !== "string" || !UUID.test(value.report_id)) {
+    return null;
+  }
+  const snapshot = value.snapshot;
+  if (typeof snapshot.schema_version !== "string") return null;
+  if (
+    !Array.isArray(snapshot.pain_points) ||
+    !Array.isArray(snapshot.opportunities)
+  )
+    return null;
+  return {
+    report_id: value.report_id,
+    ...snapshot,
+  } as unknown as ReportSnapshot;
 }
