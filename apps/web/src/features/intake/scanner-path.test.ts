@@ -9,6 +9,7 @@ describe("scanner proxy path whitelist", () => {
     [["portfolio"], "portfolio"],
     [["portfolio", "opportunities"], "portfolio/opportunities"],
     [["scoring-configurations"], "scoring-configurations"],
+    [["integration-catalog"], "integration-catalog"],
     [["projects", ID], `projects/${ID}`],
     [["projects", ID, "processes"], `projects/${ID}/processes`],
     [["processes", ID], `processes/${ID}`],

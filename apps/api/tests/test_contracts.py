@@ -22,6 +22,7 @@ def test_m5_openapi_contract():
         "/auth/register",
         "/health/live",
         "/health/ready",
+        "/integration-catalog",
         "/opportunities/{opportunityId}",
         "/portfolio/opportunities",
         "/process-versions/{versionId}",
