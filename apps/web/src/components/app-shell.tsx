@@ -12,6 +12,7 @@ const navigation = [
   { href: "/projects", label: "Projects", icon: "folder" },
   { href: "/portfolio", label: "Portfolio", icon: "grid" },
   { href: "/integrations", label: "Integration catalog", icon: "layers" },
+  { href: "/audit", label: "Audit explorer", icon: "file" },
   { href: "/settings", label: "Scoring settings", icon: "sliders" },
   { href: "/guide", label: "Assessment guide", icon: "book" },
   { href: "/status", label: "Workspace status", icon: "pulse" },

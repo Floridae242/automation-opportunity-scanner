@@ -8,6 +8,7 @@ const ALLOWED_ROOTS = new Set([
   "process-versions",
   "scoring-configurations",
   "integration-catalog",
+  "audit-events",
 ]);
 const ACTION_SEGMENTS = new Set([
   "processes",
