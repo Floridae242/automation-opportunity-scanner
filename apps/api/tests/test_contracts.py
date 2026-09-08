@@ -20,6 +20,7 @@ def test_m5_openapi_contract():
         "/auth/logout",
         "/auth/me",
         "/auth/register",
+        "/audit-events",
         "/health/live",
         "/health/ready",
         "/integration-catalog",

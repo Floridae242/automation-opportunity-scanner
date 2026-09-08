@@ -13,6 +13,7 @@ from aos_api.config import Settings
 from aos_api.db import DatabaseProbe, ReadinessProbe
 from aos_api.errors import install_error_handlers
 from aos_api.routes_analysis import analyses_router, opportunities_router, versions_router
+from aos_api.routes_audit import audit_router
 from aos_api.routes_auth import router as auth_router
 from aos_api.routes_catalog import catalog_router
 from aos_api.routes_comments import comments_router
@@ -71,6 +72,7 @@ def create_app(
 
     install_error_handlers(app)
     app.include_router(auth_router)
+    app.include_router(audit_router)
     app.include_router(projects_router)
     app.include_router(processes_router)
     app.include_router(analyses_router)
