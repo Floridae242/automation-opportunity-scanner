@@ -1,6 +1,6 @@
 # Automation Opportunity Scanner — AI Build Pack v1
 
-This repository is a **source-of-truth build pack** for an AI coding agent and a 4-person software team to design, implement, test, demo, deploy, and later scale an Automation Opportunity Scanner.
+This repository contains the source-of-truth build pack and a runnable MVP for an Automation Opportunity Scanner. It is ready for local development, automated verification, and a demo deployment.
 
 ## Product in one sentence
 Turn a business-process description into a reviewed process model, pain-point analysis, ranked automation opportunities, technology recommendations, explainable scores, ROI estimates (when evidence exists), and an executive report.
@@ -26,6 +26,40 @@ Turn a business-process description into a reviewed process model, pain-point an
 - Observability: OpenTelemetry + error tracking
 - Local environment: Docker Compose
 
+## Run locally
+
+Use Node 24, Python 3.12, and Docker Desktop. From the repository root:
+
+```bash
+npm ci
+python3.12 -m venv apps/api/.venv
+apps/api/.venv/bin/pip install -r apps/api/requirements-dev.lock
+apps/api/.venv/bin/pip install --no-deps -e apps/api
+cp .env.local.example .env
+```
+
+Set the same local password in `POSTGRES_PASSWORD` and `DATABASE_URL` in `.env`, then start PostgreSQL and migrate it:
+
+```bash
+npm run db:up
+(cd apps/api && .venv/bin/alembic upgrade head)
+```
+
+Run the API and web application in separate terminals:
+
+```bash
+npm run dev:api
+npm run dev
+```
+
+Open <http://127.0.0.1:3000>, register a local organization, and begin a project assessment. Full commands and environment notes are in [LOCAL_DEVELOPMENT.md](docs/devops/LOCAL_DEVELOPMENT.md).
+
+## MVP status
+
+The implemented flow includes organization-scoped authentication, project and process intake, untrusted UTF-8/PDF document ingestion, review-gated AI extraction, deterministic opportunity scoring, recommendations and ROI scenarios, a portfolio view, report snapshots, and PDF export. CI runs formatting, static checks, PostgreSQL integration tests, offline AI evaluation, browser tests, build verification, and dependency audits.
+
+The default AI provider is deterministic demo extraction. Configure `AI_PROVIDER=openai_compatible` with `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL` only in an approved environment for live-provider testing. Provider-neutral production setup is documented in [PRODUCTION_RUNBOOK.md](docs/devops/PRODUCTION_RUNBOOK.md).
+
 ## Start here — AI coding agent
 Read in this order:
 1. `MASTER_INSTRUCTIONS.md`
@@ -50,7 +84,7 @@ Read `docs/learning/ZERO_TO_BUILD_ROADMAP.md`, then follow `docs/devops/LOCAL_DE
 This pack defines how to **discover and prioritize automation opportunities**. It does not instruct the application to automatically execute high-impact business actions, move money, modify ERP records, or operate customer systems without separate authorization, controls, and integration projects.
 
 ## Pack status
-- Version: 1.0.0
+- Version: 1.0.0 MVP
 - Designed for: 18-day hackathon -> internship continuation -> production SaaS evolution
 - Language: English technical source-of-truth with Thai-friendly notes in selected planning documents
-- Generated: 2026-09-05
+- Updated: 2026-09-08
