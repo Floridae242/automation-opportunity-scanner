@@ -31,18 +31,27 @@ export function ScoringSettings({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   if (!configuration) {
-    return <p className="auth-error">Scoring settings are unavailable for this workspace.</p>;
+    return (
+      <p className="auth-error">
+        Scoring settings are unavailable for this workspace.
+      </p>
+    );
   }
   const activeConfiguration = configuration;
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const weights = Object.fromEntries(
-      Object.keys(activeConfiguration.weights).map((key) => [key, Number(form.get(key)) / 100]),
+      Object.keys(activeConfiguration.weights).map((key) => [
+        key,
+        Number(form.get(key)) / 100,
+      ]),
     );
     setPending(true);
     setError(null);
-    const result = await callScannerApi("POST", "scoring-configurations", { weights });
+    const result = await callScannerApi("POST", "scoring-configurations", {
+      weights,
+    });
     setPending(false);
     if (!result.ok) return setError(result.message);
     router.refresh();
@@ -52,8 +61,8 @@ export function ScoringSettings({
       <p className="eyebrow">SCORING CONFIGURATION</p>
       <h2>Version {activeConfiguration.version_no}</h2>
       <p>
-        New analyses use the saved weights. Existing analysis and report snapshots keep their
-        original configuration.
+        New analyses use the saved weights. Existing analysis and report
+        snapshots keep their original configuration.
       </p>
       <form onSubmit={submit}>
         {Object.entries(activeConfiguration.weights).map(([key, weight]) => (
@@ -72,13 +81,23 @@ export function ScoringSettings({
           </label>
         ))}
         {editable ? (
-          <button className="button button-primary" disabled={pending} type="submit">
+          <button
+            className="button button-primary"
+            disabled={pending}
+            type="submit"
+          >
             {pending ? "Saving…" : "Save as new version"}
           </button>
         ) : (
-          <p className="margin-note">Only owners and administrators can change scoring weights.</p>
+          <p className="margin-note">
+            Only owners and administrators can change scoring weights.
+          </p>
         )}
-        {error && <p className="auth-error" role="alert">{error}</p>}
+        {error && (
+          <p className="auth-error" role="alert">
+            {error}
+          </p>
+        )}
       </form>
     </section>
   );

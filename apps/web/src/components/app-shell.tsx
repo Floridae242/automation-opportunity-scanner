@@ -72,15 +72,15 @@ export function AppShell({
         ? "Project detail"
         : pathname.startsWith("/processes/")
           ? "Process intake"
-            : pathname === "/portfolio"
-              ? "Portfolio"
-              : pathname === "/settings"
-                ? "Scoring settings"
-            : pathname.startsWith("/analyses/")
-              ? "Opportunity analysis"
-              : pathname.startsWith("/opportunities/")
-                ? "Opportunity detail"
-                : (PAGE_LABELS[pathname] ?? "Page not found");
+          : pathname === "/portfolio"
+            ? "Portfolio"
+            : pathname === "/settings"
+              ? "Scoring settings"
+              : pathname.startsWith("/analyses/")
+                ? "Opportunity analysis"
+                : pathname.startsWith("/opportunities/")
+                  ? "Opportunity detail"
+                  : (PAGE_LABELS[pathname] ?? "Page not found");
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">

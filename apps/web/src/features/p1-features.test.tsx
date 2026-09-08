@@ -28,14 +28,23 @@ describe("P1 collaboration and configuration features", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
-        json: async () => [{ id: "comment", body: "Looks good", author: { display_name: "Ada" } }],
+        json: async () => [
+          {
+            id: "comment",
+            body: "Looks good",
+            author: { display_name: "Ada" },
+          },
+        ],
       }),
     );
     callScannerApi.mockResolvedValue({ ok: true });
     const user = userEvent.setup();
     render(<CommentsPanel versionId={ID_A} />);
     expect(await screen.findByText("Looks good")).toBeInTheDocument();
-    await user.type(screen.getByLabelText("Add comment"), "Please verify the approval.");
+    await user.type(
+      screen.getByLabelText("Add comment"),
+      "Please verify the approval.",
+    );
     await user.click(screen.getByRole("button", { name: "Post comment" }));
     await waitFor(() =>
       expect(callScannerApi).toHaveBeenCalledWith(
@@ -51,10 +60,14 @@ describe("P1 collaboration and configuration features", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ json: async () => [] }));
     const user = userEvent.setup();
     render(<CommentsPanel versionId={ID_A} />);
-    expect(await screen.findByText("No comments on this version yet.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("No comments on this version yet."),
+    ).toBeInTheDocument();
     await user.type(screen.getByLabelText("Add comment"), "   ");
     await user.click(screen.getByRole("button", { name: "Post comment" }));
-    expect(screen.getByRole("alert")).toHaveTextContent("Write a comment before posting.");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Write a comment before posting.",
+    );
   });
 
   it("compares two versions and shows the changed summary", async () => {
@@ -73,37 +86,71 @@ describe("P1 collaboration and configuration features", () => {
     render(
       <VersionCompare
         versions={[
-          { id: ID_B, version_no: 2, review_status: "reviewed", source_summary: "new", metrics: {}, created_at: "" },
-          { id: ID_A, version_no: 1, review_status: "reviewed", source_summary: "old", metrics: {}, created_at: "" },
+          {
+            id: ID_B,
+            version_no: 2,
+            review_status: "reviewed",
+            source_summary: "new",
+            metrics: {},
+            created_at: "",
+          },
+          {
+            id: ID_A,
+            version_no: 1,
+            review_status: "reviewed",
+            source_summary: "old",
+            metrics: {},
+            created_at: "",
+          },
         ]}
       />,
     );
     await user.click(screen.getByRole("button", { name: "Compare" }));
-    expect(await screen.findByText("v1 → v2: summary changed")).toBeInTheDocument();
+    expect(
+      await screen.findByText("v1 → v2: summary changed"),
+    ).toBeInTheDocument();
   });
 
   it("saves editable weights as percentages and makes viewers read-only", async () => {
     callScannerApi.mockResolvedValue({ ok: true });
     const user = userEvent.setup();
     const { rerender } = render(
-      <ScoringSettings configuration={{ id: ID_A, version_no: 2, weights }} editable />,
+      <ScoringSettings
+        configuration={{ id: ID_A, version_no: 2, weights }}
+        editable
+      />,
     );
     await user.clear(screen.getByLabelText("Business value"));
     await user.type(screen.getByLabelText("Business value"), "40");
-    await user.click(screen.getByRole("button", { name: "Save as new version" }));
+    await user.click(
+      screen.getByRole("button", { name: "Save as new version" }),
+    );
     await waitFor(() =>
-      expect(callScannerApi).toHaveBeenCalledWith("POST", "scoring-configurations", {
-        weights: expect.objectContaining({ business_value: 0.4 }),
-      }),
+      expect(callScannerApi).toHaveBeenCalledWith(
+        "POST",
+        "scoring-configurations",
+        { weights: expect.objectContaining({ business_value: 0.4 }) },
+      ),
     );
     expect(refresh).toHaveBeenCalled();
-    rerender(<ScoringSettings configuration={{ id: ID_A, version_no: 2, weights }} editable={false} />);
-    expect(screen.getByText("Only owners and administrators can change scoring weights.")).toBeInTheDocument();
+    rerender(
+      <ScoringSettings
+        configuration={{ id: ID_A, version_no: 2, weights }}
+        editable={false}
+      />,
+    );
+    expect(
+      screen.getByText(
+        "Only owners and administrators can change scoring weights.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("Business value")).toBeDisabled();
   });
 
   it("shows the unavailable configuration state", () => {
     render(<ScoringSettings configuration={null} editable={false} />);
-    expect(screen.getByText("Scoring settings are unavailable for this workspace.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Scoring settings are unavailable for this workspace."),
+    ).toBeInTheDocument();
   });
 });
