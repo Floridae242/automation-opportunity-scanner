@@ -120,6 +120,24 @@ class ProcessVersion(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class ProcessVersionComment(Base):
+    __tablename__ = "process_version_comments"
+    __table_args__ = (
+        Index(
+            "ix_process_version_comments_organization_version_created",
+            "organization_id",
+            "process_version_id",
+            "created_at",
+        ),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
+    process_version_id: Mapped[UUID] = mapped_column(ForeignKey("process_versions.id"), index=True)
+    created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    body: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class AnalysisRun(Base):
     __tablename__ = "analysis_runs"
     __table_args__ = (

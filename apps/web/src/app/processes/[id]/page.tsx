@@ -6,6 +6,7 @@ import { IntakeForm } from "@/features/intake/intake-form";
 import { DocumentUpload } from "@/features/intake/document-upload";
 import { ExtractionPanel } from "@/features/intake/extraction-panel";
 import { StepReviewEditor } from "@/features/intake/step-review";
+import { CommentsPanel } from "@/features/intake/comments-panel";
 import { OpportunityAnalyzer } from "@/features/portfolio/opportunity-analyzer";
 import { readServerSession } from "@/features/auth/session";
 
@@ -71,6 +72,7 @@ export default async function ProcessPage({
       ) : latestDraft !== null ? (
         <ExtractionPanel processId={process.id} />
       ) : null}
+      {process.latest_version && <CommentsPanel versionId={process.latest_version.id} />}
       {process.latest_version?.review_status === "reviewed" && (
         <OpportunityAnalyzer processId={process.id} />
       )}

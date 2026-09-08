@@ -158,6 +158,47 @@ def test_intake_versioning_and_supersede(client):
     assert versions[0]["metrics"] == {}
 
 
+def test_process_version_comments_are_tenant_scoped_and_audited(client):
+    user = register(client, "comments@corp.test", name="Commenter")
+    project = create_project(client)
+    process = create_process(client, project["id"])
+    version_id = save_intake(client, process["id"]).json()["version_id"]
+    first = client.post(
+        f"/process-versions/{version_id}/comments", json={"body": "  Please verify the handoff.  "}
+    )
+    assert first.status_code == 201, first.text
+    assert first.json()["body"] == "Please verify the handoff."
+    assert first.json()["author"]["id"] == user["user"]["id"]
+    second = client.post(
+        f"/process-versions/{version_id}/comments", json={"body": "Reviewed by operations."}
+    )
+    assert second.status_code == 201
+    listed = client.get(f"/process-versions/{version_id}/comments")
+    assert [item["body"] for item in listed.json()] == [
+        "Please verify the handoff.",
+        "Reviewed by operations.",
+    ]
+    with sessionmaker(bind=client.engine)() as db:  # type: ignore[attr-defined]
+        entry = db.scalar(select(AuditLog).where(AuditLog.action == "process_version.comment_created"))
+        assert entry is not None
+        assert entry.metadata_json["body_length"] == len("Please verify the handoff.")
+        assert "body" not in entry.metadata_json
+
+
+def test_process_version_comments_validate_role_and_tenant(client):
+    user = register(client, "viewer@corp.test")
+    project = create_project(client)
+    process = create_process(client, project["id"])
+    version_id = save_intake(client, process["id"]).json()["version_id"]
+    for body in ({"body": "   "}, {"body": "x" * 2001}, {"body": "valid", "role": "owner"}):
+        assert client.post(f"/process-versions/{version_id}/comments", json=body).status_code == 422
+    set_role(client, user["user"]["id"], "viewer")
+    assert client.post(f"/process-versions/{version_id}/comments", json={"body": "blocked"}).status_code == 403
+    register(client, "other@tenant.test", org="Other")
+    assert client.get(f"/process-versions/{version_id}/comments").status_code == 404
+    assert client.post(f"/process-versions/{version_id}/comments", json={"body": "blocked"}).status_code == 404
+
+
 def test_metrics_validation_rejects_fabrication(client):
     register(client, "a@corp.test")
     project = create_project(client)
