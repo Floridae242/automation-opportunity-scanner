@@ -38,6 +38,7 @@ def test_m5_openapi_contract():
         "/reports/{reportId}/pdf",
         "/reports/{reportId}/docx",
         "/reports/{reportId}/slides",
+        "/scoring-configurations",
     }
 
 

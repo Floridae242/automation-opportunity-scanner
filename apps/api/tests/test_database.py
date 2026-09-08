@@ -22,7 +22,9 @@ def test_database_probe_checks_migration_and_connection():
         patch("aos_api.db.MigrationContext") as context,
     ):
         probe = DatabaseProbe(settings())
-        context.configure.return_value.get_current_heads.return_value = ("0009_comments",)
+        context.configure.return_value.get_current_heads.return_value = (
+            "0010_scoring_configurations",
+        )
         assert probe.check()
         context.configure.return_value.get_current_heads.return_value = ()
         assert not probe.check()

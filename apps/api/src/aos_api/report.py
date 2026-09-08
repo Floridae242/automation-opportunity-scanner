@@ -72,6 +72,7 @@ def build_report(db: Session, org_id: uuid.UUID, actor_id: uuid.UUID, run: Analy
                 "confidence": opportunity.confidence,
                 "dimensions": dimensions.get("scores", {}),
                 "dimension_evidence": dimensions.get("evidence", {}),
+                "scoring_weights": dimensions.get("weights", {}),
                 "recommendation": None
                 if advice is None
                 else {
@@ -98,6 +99,9 @@ def build_report(db: Session, org_id: uuid.UUID, actor_id: uuid.UUID, run: Analy
     snapshot = {
         "schema_version": REPORT_SCHEMA_VERSION,
         "analysis_run_id": str(run.id),
+        "scoring_configuration_id": (
+            str(run.scoring_configuration_id) if run.scoring_configuration_id else None
+        ),
         "process": process.name if process else None,
         "project": project.name if project else None,
         "source_version_no": version.version_no if version else None,

@@ -27,6 +27,7 @@ select = ["E", "F", "I", "UP", "B"]
 "src/aos_api/routes_intake.py" = ["B008"]
 "src/aos_api/routes_analysis.py" = ["B008"]
 "src/aos_api/routes_comments.py" = ["B008"]
+"src/aos_api/routes_scoring.py" = ["B008"]
 [tool.mypy]
 python_version = "3.12"
 strict = true

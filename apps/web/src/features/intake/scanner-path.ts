@@ -6,6 +6,7 @@ const ALLOWED_ROOTS = new Set([
   "reports",
   "portfolio",
   "process-versions",
+  "scoring-configurations",
 ]);
 const ACTION_SEGMENTS = new Set([
   "processes",

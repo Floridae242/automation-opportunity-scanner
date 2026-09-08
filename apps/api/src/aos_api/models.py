@@ -31,6 +31,21 @@ class Organization(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class ScoringConfiguration(Base):
+    __tablename__ = "scoring_configurations"
+    __table_args__ = (
+        UniqueConstraint("organization_id", "version_no", name="uq_scoring_configuration_version"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
+    version_no: Mapped[int] = mapped_column(Integer)
+    weights_json: Mapped[dict[str, object]] = mapped_column(
+        JSONB, server_default=text("'{}'::jsonb")
+    )
+    created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class User(Base):
     __tablename__ = "users"
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -153,6 +168,9 @@ class AnalysisRun(Base):
     prompt_version: Mapped[str | None] = mapped_column(String(64))
     schema_version: Mapped[str | None] = mapped_column(String(64))
     scoring_version: Mapped[str | None] = mapped_column(String(64))
+    scoring_configuration_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("scoring_configurations.id"), index=True
+    )
     idempotency_key: Mapped[str | None] = mapped_column(String(64))
     error_code: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -279,6 +297,9 @@ class OpportunityScore(Base):
     )
     confidence_score: Mapped[int] = mapped_column()
     scoring_version: Mapped[str] = mapped_column(String(64))
+    scoring_configuration_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("scoring_configurations.id"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

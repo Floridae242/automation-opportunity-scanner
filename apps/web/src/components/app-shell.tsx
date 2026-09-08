@@ -11,6 +11,7 @@ const navigation = [
   { href: "/", label: "Overview", icon: "grid" },
   { href: "/projects", label: "Projects", icon: "folder" },
   { href: "/portfolio", label: "Portfolio", icon: "grid" },
+  { href: "/settings", label: "Scoring settings", icon: "sliders" },
   { href: "/guide", label: "Assessment guide", icon: "book" },
   { href: "/status", label: "Workspace status", icon: "pulse" },
 ] as const;
@@ -71,8 +72,10 @@ export function AppShell({
         ? "Project detail"
         : pathname.startsWith("/processes/")
           ? "Process intake"
-          : pathname === "/portfolio"
-            ? "Portfolio"
+            : pathname === "/portfolio"
+              ? "Portfolio"
+              : pathname === "/settings"
+                ? "Scoring settings"
             : pathname.startsWith("/analyses/")
               ? "Opportunity analysis"
               : pathname.startsWith("/opportunities/")

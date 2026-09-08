@@ -16,6 +16,7 @@ from aos_api.routes_analysis import analyses_router, opportunities_router, versi
 from aos_api.routes_auth import router as auth_router
 from aos_api.routes_comments import comments_router
 from aos_api.routes_intake import processes_router, projects_router
+from aos_api.routes_scoring import scoring_router
 
 
 def create_app(
@@ -74,6 +75,7 @@ def create_app(
     app.include_router(analyses_router)
     app.include_router(versions_router)
     app.include_router(comments_router)
+    app.include_router(scoring_router)
     app.include_router(opportunities_router)
 
     @app.get("/health/live", tags=["health"])

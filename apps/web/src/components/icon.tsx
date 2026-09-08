@@ -13,6 +13,7 @@ const paths = {
     "M20 7v5h-5 M4 17v-5h5 M5 7a8 8 0 0 1 13-2l2 3 M4 16l2 3a8 8 0 0 0 13-2",
   shield: "m12 2 8 3v7c0 5-8 10-8 10S4 17 4 12V5l8-3Z m-4 10 3 3 5-6",
   folder: "M3 5h7l2 3h9v12H3V5Z",
+  sliders: "M4 7h16 M4 17h16 M8 3v8 M16 13v8",
 } as const;
 
 export function Icon({

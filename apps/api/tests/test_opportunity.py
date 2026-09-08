@@ -234,6 +234,34 @@ def test_vector_engine_matches_evals_golden_exactly():
     assert sum(DIMENSION_WEIGHTS.values()) == 1.0
 
 
+def test_custom_weights_require_all_dimensions_and_change_the_score():
+    from aos_api.opportunity import DimensionResult, total_score, validate_weights
+
+    weights = validate_weights(
+        {
+            "business_value": 0.4,
+            "time_saving": 0.1,
+            "repetitiveness": 0.1,
+            "feasibility": 0.1,
+            "error_reduction": 0.1,
+            "integration_ease": 0.1,
+            "risk_safety": 0.1,
+        }
+    )
+    scores = {
+        "business_value": DimensionResult(100, ()),
+        "time_saving": DimensionResult(0, ()),
+        "repetitiveness": DimensionResult(0, ()),
+        "feasibility": DimensionResult(0, ()),
+        "error_reduction": DimensionResult(0, ()),
+        "integration_ease": DimensionResult(0, ()),
+        "risk_safety": DimensionResult(0, ()),
+    }
+    assert total_score(scores, weights) == 40
+    with pytest.raises(ValueError, match="every scoring dimension"):
+        validate_weights({"business_value": 1.0})
+
+
 def test_two_step_save_keeps_evidence_of_api_and_manual(client):
     client.post(
         "/auth/register",

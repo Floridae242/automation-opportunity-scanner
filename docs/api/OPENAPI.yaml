@@ -265,6 +265,28 @@ paths:
             application/vnd.openxmlformats-officedocument.presentationml.presentation:
               schema: { type: string, format: binary }
         '404': { description: Not found in tenant scope }
+  /scoring-configurations:
+    get:
+      summary: List immutable scoring configurations for the active organization
+      responses:
+        '200': { description: Scoring configuration history }
+        '403': { description: Owners and administrators only }
+    post:
+      summary: Create a new scoring configuration version
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [weights]
+              properties:
+                weights:
+                  type: object
+                  additionalProperties: { type: number, minimum: 0, maximum: 1 }
+      responses:
+        '201': { description: Immutable scoring configuration created }
+        '422': { description: Weights must cover all dimensions and sum to one }
   /health/live:
     get:
       summary: Liveness probe

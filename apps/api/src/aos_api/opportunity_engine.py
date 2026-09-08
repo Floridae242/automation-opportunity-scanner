@@ -28,6 +28,7 @@ from aos_api.opportunity import (
     detect_pain_points,
     score_snapshot,
 )
+from aos_api.scoring_config import configuration_weights, current_configuration
 
 _PERIODS_PER_WEEK = {
     "hour": 24 * 7,
@@ -130,7 +131,8 @@ def run_opportunity_analysis(
             "Mark the process version reviewed before scoring opportunities.",
         )
     facts = build_facts(db, version)
-    snapshot = score_snapshot(facts)
+    configuration = current_configuration(db, org_id, actor_id)
+    snapshot = score_snapshot(facts, configuration_weights(configuration))
     findings = detect_pain_points(facts)
     candidate = derive_opportunity(facts, findings)
     run = AnalysisRun(
@@ -144,6 +146,7 @@ def run_opportunity_analysis(
         prompt_version=None,
         schema_version=snapshot["scoring_version"],
         scoring_version=snapshot["scoring_version"],
+        scoring_configuration_id=configuration.id,
     )
     db.add(run)
     db.flush()
@@ -189,11 +192,13 @@ def run_opportunity_analysis(
                 dimension_json={
                     "scores": snapshot["dimensions"],
                     "evidence": snapshot["dimension_evidence"],
+                    "weights": snapshot["weights"],
                     "coverage": snapshot["coverage"],
                     "confidence_version": snapshot["confidence_version"],
                 },
                 confidence_score=confidence,
                 scoring_version=str(snapshot["scoring_version"]),
+                scoring_configuration_id=configuration.id,
             )
         )
         opportunity_id = opportunity.id

@@ -6,7 +6,9 @@ docs/domain/OPPORTUNITY_SCORING_MODEL.md. Missing evidence yields None —
 never a fabricated zero (BR-001).
 """
 
+import math
 import statistics
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -23,6 +25,27 @@ DIMENSION_WEIGHTS = {
     "integration_ease": 0.10,
     "risk_safety": 0.10,
 }
+
+
+def validate_weights(weights: Mapping[str, object]) -> dict[str, float]:
+    """Validate a complete, normalized configuration before it can affect scoring."""
+    if set(weights) != set(DIMENSION_WEIGHTS):
+        raise ValueError("Weights must include every scoring dimension exactly once.")
+    normalized: dict[str, float] = {}
+    for name, value in weights.items():
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+        ):
+            raise ValueError(f"Weight {name} must be a finite number.")
+        if value < 0 or value > 1:
+            raise ValueError(f"Weight {name} must be between 0 and 1.")
+        normalized[name] = float(value)
+    if not math.isclose(sum(normalized.values()), 1.0, abs_tol=0.000001):
+        raise ValueError("Weights must sum to 1.")
+    return normalized
+
 
 _INTEGRATION_SCORES = {
     "evidence_of_api": 90,
@@ -216,25 +239,34 @@ def business_value(facts: OpportunityFacts) -> DimensionResult:
     return DimensionResult(round(_clamp(statistics.mean(parts)), 1), tuple(evidence))
 
 
-def total_score(scores: dict[str, DimensionResult]) -> float | None:
+def total_score(
+    scores: dict[str, DimensionResult], weights: Mapping[str, float] | None = None
+) -> float | None:
     """aos-score-v1 weighted sum; None when any required dimension is missing."""
     values: list[float] = []
-    for name in DIMENSION_WEIGHTS:
+    active_weights = weights or DIMENSION_WEIGHTS
+    for name in active_weights:
         score = scores[name].score
         if score is None:
             return None
         values.append(score)
-    weights = list(DIMENSION_WEIGHTS.values())
-    return round(sum(v * w for v, w in zip(values, weights, strict=True)), 2)
+    return round(sum(v * w for v, w in zip(values, active_weights.values(), strict=True)), 2)
 
 
-def coverage(scores: dict[str, DimensionResult]) -> float:
+def coverage(
+    scores: dict[str, DimensionResult], weights: Mapping[str, float] | None = None
+) -> float:
+    active_weights = weights or DIMENSION_WEIGHTS
     known = sum(1 for result in scores.values() if result.score is not None)
-    return known * 100 / len(DIMENSION_WEIGHTS)
+    return known * 100 / len(active_weights)
 
 
-def assessment_confidence(scores: dict[str, DimensionResult], facts: OpportunityFacts) -> float:
-    cov = coverage(scores)
+def assessment_confidence(
+    scores: dict[str, DimensionResult],
+    facts: OpportunityFacts,
+    weights: Mapping[str, float] | None = None,
+) -> float:
+    cov = coverage(scores, weights)
     quality = statistics.mean(facts.fact_source_qualities) if facts.fact_source_qualities else 40.0
     review = 100.0 if facts.reviewed else 0.0
     return round(0.45 * cov + 0.35 * quality + 0.20 * review, 1)
@@ -302,18 +334,24 @@ def portfolio_axes(
     }
 
 
-def score_snapshot(facts: OpportunityFacts) -> dict[str, object]:
+def score_snapshot(
+    facts: OpportunityFacts,
+    weights: Mapping[str, object] | None = None,
+    scoring_version: str = SCORING_VERSION,
+) -> dict[str, object]:
+    active_weights = validate_weights(weights or DIMENSION_WEIGHTS)
     scores = dimension_scores(facts)
-    cov = coverage(scores)
-    confidence = assessment_confidence(scores, facts)
-    total = total_score(scores)
+    cov = coverage(scores, active_weights)
+    confidence = assessment_confidence(scores, facts, active_weights)
+    total = total_score(scores, active_weights)
     state = result_state(cov, facts.reviewed, total is not None)
     return {
-        "scoring_version": SCORING_VERSION,
+        "scoring_version": scoring_version,
+        "weights": active_weights,
         "total_score": total,
         "assessment_confidence": confidence,
-        "dimensions": {name: scores[name].score for name in DIMENSION_WEIGHTS},
-        "dimension_evidence": {name: scores[name].evidence for name in DIMENSION_WEIGHTS},
+        "dimensions": {name: scores[name].score for name in active_weights},
+        "dimension_evidence": {name: scores[name].evidence for name in active_weights},
         "coverage": round(cov, 1),
         "result_state": state,
         "priority_band": priority_band(total) if state != "insufficient_evidence" else None,
