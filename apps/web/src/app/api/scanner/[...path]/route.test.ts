@@ -20,8 +20,14 @@ describe("scanner proxy", () => {
     );
 
     const response = await GET(
-      new Request("http://localhost/api/scanner/reports/6f1d0b3e-1a2b-4c5d-8e9f-0a1b2c3d4e5f/pdf"),
-      { params: Promise.resolve({ path: ["reports", "6f1d0b3e-1a2b-4c5d-8e9f-0a1b2c3d4e5f", "pdf"] }) },
+      new Request(
+        "http://localhost/api/scanner/reports/6f1d0b3e-1a2b-4c5d-8e9f-0a1b2c3d4e5f/pdf",
+      ),
+      {
+        params: Promise.resolve({
+          path: ["reports", "6f1d0b3e-1a2b-4c5d-8e9f-0a1b2c3d4e5f", "pdf"],
+        }),
+      },
     );
 
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(pdf);
