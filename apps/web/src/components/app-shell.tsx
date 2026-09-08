@@ -11,6 +11,7 @@ const navigation = [
   { href: "/", label: "Overview", icon: "grid" },
   { href: "/projects", label: "Projects", icon: "folder" },
   { href: "/portfolio", label: "Portfolio", icon: "grid" },
+  { href: "/integrations", label: "Integration catalog", icon: "layers" },
   { href: "/settings", label: "Scoring settings", icon: "sliders" },
   { href: "/guide", label: "Assessment guide", icon: "book" },
   { href: "/status", label: "Workspace status", icon: "pulse" },
@@ -76,11 +77,13 @@ export function AppShell({
             ? "Portfolio"
             : pathname === "/settings"
               ? "Scoring settings"
-              : pathname.startsWith("/analyses/")
-                ? "Opportunity analysis"
-                : pathname.startsWith("/opportunities/")
-                  ? "Opportunity detail"
-                  : (PAGE_LABELS[pathname] ?? "Page not found");
+              : pathname === "/integrations"
+                ? "Integration catalog"
+                : pathname.startsWith("/analyses/")
+                  ? "Opportunity analysis"
+                  : pathname.startsWith("/opportunities/")
+                    ? "Opportunity detail"
+                    : (PAGE_LABELS[pathname] ?? "Page not found");
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">
