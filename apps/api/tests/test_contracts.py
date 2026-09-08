@@ -25,6 +25,7 @@ def test_m5_openapi_contract():
         "/opportunities/{opportunityId}",
         "/portfolio/opportunities",
             "/process-versions/{versionId}",
+            "/process-versions/{versionId}/compare",
             "/process-versions/{versionId}/comments",
             "/process-versions/{versionId}/review",
         "/processes/{processId}",

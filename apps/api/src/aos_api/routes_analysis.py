@@ -465,6 +465,8 @@ def read_version(
     actors = {
         a.id: a for a in db.scalars(select(Actor).where(Actor.process_version_id == version.id))
     }
+
+
     systems = {
         s.id: s for s in db.scalars(select(System).where(System.process_version_id == version.id))
     }
@@ -504,6 +506,35 @@ def read_version(
             {"name": item.name, "integration_status": item.integration_status}
             for item in db.scalars(select(System).where(System.process_version_id == version.id))
         ],
+    }
+
+
+@versions_router.get("/process-versions/{versionId}/compare")
+def compare_versions(
+    versionId: uuid.UUID,
+    against: uuid.UUID = Query(),
+    org_id: uuid.UUID = Depends(tenant_context),
+    db: Session = Depends(db_session),
+) -> dict[str, object]:
+    """Read-only comparison; versions must belong to the same tenant and process."""
+    current = get_owned(db, ProcessVersion, org_id, versionId)
+    previous = get_owned(db, ProcessVersion, org_id, against)
+    if current.process_id != previous.process_id:
+        raise ApiError(422, "VALIDATION_ERROR", "Versions must belong to the same process.")
+    before = previous.metrics_json if isinstance(previous.metrics_json, dict) else {}
+    after = current.metrics_json if isinstance(current.metrics_json, dict) else {}
+    metric_changes = {
+        key: {"before": before.get(key), "after": after.get(key)}
+        for key in sorted(set(before) | set(after))
+        if before.get(key) != after.get(key)
+    }
+    return {
+        "base": {"id": str(previous.id), "version_no": previous.version_no},
+        "target": {"id": str(current.id), "version_no": current.version_no},
+        "changes": {
+            "source_summary_changed": previous.source_summary != current.source_summary,
+            "metrics": metric_changes,
+        },
     }
 
 

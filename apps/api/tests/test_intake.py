@@ -199,6 +199,18 @@ def test_process_version_comments_validate_role_and_tenant(client):
     assert client.post(f"/process-versions/{version_id}/comments", json={"body": "blocked"}).status_code == 404
 
 
+def test_same_process_versions_can_be_compared(client):
+    register(client, "compare@corp.test")
+    project = create_project(client)
+    process = create_process(client, project["id"])
+    first = save_intake(client, process["id"], "first", duration_minutes=10).json()["version_id"]
+    second = save_intake(client, process["id"], "second", duration_minutes=20).json()["version_id"]
+    response = client.get(f"/process-versions/{second}/compare", params={"against": first})
+    assert response.status_code == 200
+    assert response.json()["changes"]["source_summary_changed"] is True
+    assert response.json()["changes"]["metrics"]["duration_minutes"] == {"before": 10, "after": 20}
+
+
 def test_metrics_validation_rejects_fabrication(client):
     register(client, "a@corp.test")
     project = create_project(client)
