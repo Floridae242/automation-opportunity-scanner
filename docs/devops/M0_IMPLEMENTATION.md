@@ -1,6 +1,6 @@
-# M0 — Running the foundation
+# M0 — Foundation implementation record
 
-Implementation started on 2026-09-05. The executable workspace lives alongside the original build-pack files. This milestone supplies a Next.js design shell, a FastAPI health service, PostgreSQL bootstrap migrations, a development seed, test-only AI seam, and local/CI checks. Identity authorization, process intake, AI extraction, scoring and reports are later milestones and are not implemented here.
+M0 began on 2026-09-05 and established the runnable Next.js/FastAPI/PostgreSQL foundation, migrations, seed, test AI seam, and CI. It is retained as a historical implementation record. The MVP now also includes organization-scoped authentication, intake, reviewed extraction, deterministic scoring, recommendations, reports, exports, audit exploration, configurable scores, benefit tracking, and organization administration.
 
 ## Local setup
 
@@ -22,7 +22,7 @@ cd apps/api
 .venv/bin/python -m aos_api.seed
 ```
 
-The seed creates only a clearly marked local organization, user and membership. It is idempotent, does not create login credentials, and is prohibited in production. M1 will establish authentication and authorization.
+The seed creates a clearly marked local organization, user, and membership. It is idempotent and prohibited in production. Register a local account through the web application to sign in.
 
 Start two terminals at the repository root:
 
@@ -36,7 +36,7 @@ npm run dev:api
 npm run dev
 ```
 
-Open <http://127.0.0.1:3000>. The overview, assessment guide and workspace-status pages work without a model API key. Status checks call FastAPI through a server-side route with a bounded timeout. There are no tenant data routes in M0.
+Open <http://127.0.0.1:3000>, register an organization, and create a project/process assessment. Status checks call FastAPI through a server-side route with a bounded timeout. The default AI provider is deterministic demo extraction; configure a live provider only in an approved environment.
 
 | Service | Address |
 | --- | --- |
@@ -78,7 +78,7 @@ Playwright starts its own API on 8100 and production web server on 3100, tests d
 
 CI is defined in `.github/workflows/ci.yml`. It installs locked dependencies, checks lint/format/types, tests real PostgreSQL, validates implemented OpenAPI and JSON schemas, builds the web app, runs browsers, and scans dependencies. No remote workflow or deployment has been triggered by creating this file.
 
-## Decisions and unresolved source conflicts
+## Historical decisions and source conflicts
 
 M0 uses the manifest's milestone order and the `/health/live` + `/health/ready` endpoints in `LOCAL_DEVELOPMENT.md`. The research report's `/healthz` is not exposed as a second API. Source-pack files remain intact; their original SHA-256 manifest describes the pack, not the new application.
 
@@ -93,4 +93,4 @@ The following work is deferred rather than silently combining incompatible speci
 | Upload/export | Research treats upload and file exports as must-have; product/backlog defer parts of this scope. | M2/M8 |
 | Process representation | Existing extraction schemas lack much of the documented decisions, edges and field-level provenance data. | M3/M4 |
 
-No final scoring, business API, upload/export, or review bypass has been implemented. Resolve each affected contract explicitly before building its milestone, as required by `MASTER_INSTRUCTIONS.md`.
+The listed conflicts were tracked during the initial foundation work. The implemented application follows the reviewed domain contracts for scoring, tenant scope, intake, upload/export, and review gating. Future changes must still resolve any new conflict explicitly before implementation.
