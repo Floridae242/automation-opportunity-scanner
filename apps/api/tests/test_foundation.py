@@ -78,3 +78,14 @@ def test_invalid_database_url_not_exposed():
     with pytest.raises(ValidationError) as error:
         Settings(database_url="invalid-secret-database-url", _env_file=None)
     assert "invalid-secret-database-url" not in str(error.value)
+
+
+def test_sso_configuration_reports_missing_values_without_exposing_a_secret():
+    settings = Settings(
+        database_url="postgresql+psycopg://a:b@localhost/test",
+        sso_issuer="https://id.example.test",
+        sso_client_id="scanner",
+        sso_client_secret="sso-secret",
+        _env_file=None,
+    )
+    assert settings.sso_missing_settings() == ["SSO_REDIRECT_URI"]

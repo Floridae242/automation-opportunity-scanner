@@ -315,6 +315,22 @@ def me(
     return _me_payload(db, context)
 
 
+@router.get("/sso/status")
+def sso_status(
+    request: Request,
+    context: AuthContext = Depends(require_roles("owner")),
+) -> dict[str, object]:
+    settings = request.app.state.settings
+    if settings is None:
+        raise ApiError(503, "SERVICE_UNAVAILABLE", "Identity configuration is unavailable.")
+    missing = settings.sso_missing_settings()
+    return {
+        "provider": "openid_connect",
+        "configured": not missing,
+        "missing": missing,
+    }
+
+
 @router.post("/active-organization")
 def switch_organization(
     body: SwitchIn,

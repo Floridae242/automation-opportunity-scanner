@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     ai_api_key: SecretStr | None = Field(default=None, validation_alias="AI_API_KEY")
     ai_model: str | None = Field(default=None, validation_alias="AI_MODEL")
     ai_timeout_seconds: float = Field(default=30.0, validation_alias="AI_TIMEOUT_SECONDS")
+    sso_issuer: str | None = Field(default=None, validation_alias="SSO_ISSUER")
+    sso_client_id: str | None = Field(default=None, validation_alias="SSO_CLIENT_ID")
+    sso_client_secret: SecretStr | None = Field(default=None, validation_alias="SSO_CLIENT_SECRET")
+    sso_redirect_uri: str | None = Field(default=None, validation_alias="SSO_REDIRECT_URI")
 
     @field_validator("database_url")
     @classmethod
@@ -37,3 +41,18 @@ class Settings(BaseSettings):
                 "DATABASE_URL must use postgresql+psycopg and specify a database"
             ) from None
         return value
+
+    def sso_missing_settings(self) -> list[str]:
+        values = {
+            "SSO_ISSUER": self.sso_issuer,
+            "SSO_CLIENT_ID": self.sso_client_id,
+            "SSO_CLIENT_SECRET": self.sso_client_secret,
+            "SSO_REDIRECT_URI": self.sso_redirect_uri,
+        }
+        return [
+            name
+            for name, value in values.items()
+            if value is None
+            or (isinstance(value, SecretStr) and not value.get_secret_value().strip())
+            or (isinstance(value, str) and not value.strip())
+        ]

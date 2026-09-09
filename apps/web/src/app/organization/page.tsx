@@ -8,6 +8,8 @@ import { fetchWorkspaceJson } from "@/features/intake/workspace-data";
 
 export const dynamic = "force-dynamic";
 
+type SsoStatus = { configured: boolean; missing: string[] };
+
 function parseMembers(value: unknown): OrganizationMember[] | null {
   if (!Array.isArray(value)) return null;
   const roles = new Set(["owner", "admin", "analyst", "reviewer", "viewer"]);
@@ -23,6 +25,19 @@ function parseMembers(value: unknown): OrganizationMember[] | null {
   );
 }
 
+function parseSsoStatus(value: unknown): SsoStatus | null {
+  if (!value || typeof value !== "object") return null;
+  const status = value as Record<string, unknown>;
+  if (
+    typeof status.configured !== "boolean" ||
+    !Array.isArray(status.missing) ||
+    !status.missing.every((item) => typeof item === "string")
+  ) {
+    return null;
+  }
+  return { configured: status.configured, missing: status.missing as string[] };
+}
+
 export default async function OrganizationPage() {
   const session = await readServerSession();
   if (!session) redirect("/login");
@@ -36,6 +51,15 @@ export default async function OrganizationPage() {
     parseMembers,
     [],
   );
+  const sso = await fetchWorkspaceJson("auth/sso/status", parseSsoStatus, {
+    configured: false,
+    missing: [
+      "SSO_ISSUER",
+      "SSO_CLIENT_ID",
+      "SSO_CLIENT_SECRET",
+      "SSO_REDIRECT_URI",
+    ],
+  });
   return (
     <div className="page-content">
       <section className="page-intro">
@@ -47,6 +71,19 @@ export default async function OrganizationPage() {
             receives.
           </p>
         </div>
+      </section>
+      <section className="guide-card" aria-label="Single sign-on status">
+        <p className="eyebrow">SINGLE SIGN-ON</p>
+        <h2>
+          {sso.configured
+            ? "OIDC configuration is ready"
+            : "OIDC setup required"}
+        </h2>
+        <p>
+          {sso.configured
+            ? "The deployment has all required OpenID Connect settings. Complete the provider verification before enabling sign-in."
+            : `Set ${sso.missing.join(", ")} in the deployment secret store before enabling SSO.`}
+        </p>
       </section>
       <MemberAdministration members={members} />
     </div>
