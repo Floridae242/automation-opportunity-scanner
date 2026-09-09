@@ -87,6 +87,10 @@ describe("intake contract", () => {
     form.set("systems", "CRM, ERP");
     form.set("approvals_required", "2.9");
     form.set("sensitivity", "restricted");
+    form.set("loaded_hourly_cost", "650");
+    form.set("monthly_operating_cost", "1000");
+    form.set("implementation_cost", "24000");
+    form.set("currency", " thb ");
     const metrics = parseMetricsInput(form);
     expect(metrics).toMatchObject({
       frequency: { value: 48, period: "month" },
@@ -96,6 +100,10 @@ describe("intake contract", () => {
       systems: ["CRM", "ERP"],
       approvals_required: 2,
       sensitivity: "restricted",
+      loaded_hourly_cost: 650,
+      monthly_operating_cost: 1000,
+      implementation_cost: 24000,
+      currency: "THB",
     });
     expect(metrics.sla).toHaveLength(200);
 
@@ -107,6 +115,8 @@ describe("intake contract", () => {
     invalid.set("rework_rate", "not-a-number");
     invalid.set("approvals_required", "-1");
     invalid.set("sensitivity", "secret");
+    invalid.set("currency", "thai");
+    invalid.set("loaded_hourly_cost", "-1");
     expect(parseMetricsInput(invalid)).toEqual({});
   });
 

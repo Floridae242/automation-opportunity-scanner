@@ -138,6 +138,27 @@ export function IntakeForm({ processId }: { processId: string }) {
             <option value="restricted">restricted</option>
           </select>
         </label>
+        <label>
+          Loaded hourly cost
+          <input min="0" name="loaded_hourly_cost" step="0.01" type="number" />
+        </label>
+        <label>
+          Currency (ISO)
+          <input maxLength={3} name="currency" placeholder="THB" />
+        </label>
+        <label>
+          Monthly operating cost
+          <input
+            min="0"
+            name="monthly_operating_cost"
+            step="0.01"
+            type="number"
+          />
+        </label>
+        <label>
+          Implementation cost
+          <input min="0" name="implementation_cost" step="0.01" type="number" />
+        </label>
       </div>
       {error && (
         <p role="alert" className="auth-error">

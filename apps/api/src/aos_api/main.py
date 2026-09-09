@@ -19,6 +19,7 @@ from aos_api.routes_auth import router as auth_router
 from aos_api.routes_benefits import benefits_router
 from aos_api.routes_catalog import catalog_router
 from aos_api.routes_comments import comments_router
+from aos_api.routes_cost_templates import cost_templates_router
 from aos_api.routes_intake import processes_router, projects_router
 from aos_api.routes_scoring import scoring_router
 
@@ -82,6 +83,7 @@ def create_app(
     app.include_router(analyses_router)
     app.include_router(versions_router)
     app.include_router(comments_router)
+    app.include_router(cost_templates_router)
     app.include_router(catalog_router)
     app.include_router(scoring_router)
     app.include_router(opportunities_router)

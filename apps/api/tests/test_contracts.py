@@ -21,6 +21,7 @@ def test_m5_openapi_contract():
         "/auth/me",
         "/auth/register",
         "/auth/sso/status",
+        "/cost-templates",
         "/organization-members",
         "/organization-members/{membershipId}",
         "/audit-events",

@@ -32,6 +32,7 @@ select = ["E", "F", "I", "UP", "B"]
 "src/aos_api/routes_audit.py" = ["B008"]
 "src/aos_api/routes_benefits.py" = ["B008"]
 "src/aos_api/routes_administration.py" = ["B008"]
+"src/aos_api/routes_cost_templates.py" = ["B008"]
 [tool.mypy]
 python_version = "3.12"
 strict = true

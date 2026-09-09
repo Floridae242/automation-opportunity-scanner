@@ -93,6 +93,18 @@ export function parseMetricsInput(form: FormData): Record<string, unknown> {
     .filter(Boolean)
     .slice(0, 50);
   if (systems.length) metrics.systems = systems;
+  for (const name of [
+    "loaded_hourly_cost",
+    "monthly_operating_cost",
+    "implementation_cost",
+  ]) {
+    const value = String(form.get(name) || "");
+    if (value !== "" && Number(value) >= 0) metrics[name] = Number(value);
+  }
+  const currency = String(form.get("currency") || "")
+    .trim()
+    .toUpperCase();
+  if (/^[A-Z]{3}$/.test(currency)) metrics.currency = currency;
   const approvals = Number(form.get("approvals_required"));
   if (
     form.get("approvals_required") &&
