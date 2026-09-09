@@ -28,6 +28,9 @@ def upgrade():
     op.create_index(
         "ix_benefit_realizations_organization_id", "benefit_realizations", ["organization_id"]
     )
+    op.create_index(
+        "ix_benefit_realizations_opportunity_id", "benefit_realizations", ["opportunity_id"]
+    )
 
 
 def downgrade():
