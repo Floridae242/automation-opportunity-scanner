@@ -5,6 +5,25 @@ import {
   type ScoringConfiguration,
 } from "@/features/portfolio/scoring-settings";
 import { fetchWorkspaceJson } from "@/features/intake/workspace-data";
+import {
+  CostTemplates,
+  type CostTemplate,
+} from "@/features/portfolio/cost-templates";
+
+function parseCostTemplates(value: unknown): CostTemplate[] | null {
+  if (!Array.isArray(value)) return null;
+  return value.filter(
+    (item): item is CostTemplate =>
+      Boolean(item) &&
+      typeof item === "object" &&
+      typeof (item as CostTemplate).id === "string" &&
+      typeof (item as CostTemplate).name === "string" &&
+      typeof (item as CostTemplate).currency === "string" &&
+      typeof (item as CostTemplate).loaded_hourly_cost === "number" &&
+      typeof (item as CostTemplate).monthly_operating_cost === "number" &&
+      typeof (item as CostTemplate).implementation_cost === "number",
+  );
+}
 
 function parseConfigurations(
   value: unknown,
@@ -43,6 +62,12 @@ export default async function SettingsPage() {
       configurations: [],
     },
   );
+  const templates = await fetchWorkspaceJson(
+    "cost-templates",
+    parseCostTemplates,
+    [],
+  );
+  const editable = active?.role === "owner" || active?.role === "admin";
   return (
     <div className="page-content">
       <section className="page-intro">
@@ -60,8 +85,9 @@ export default async function SettingsPage() {
       </section>
       <ScoringSettings
         configuration={data.configurations[0] ?? null}
-        editable={active?.role === "owner" || active?.role === "admin"}
+        editable={editable}
       />
+      <CostTemplates editable={editable} templates={templates} />
     </div>
   );
 }

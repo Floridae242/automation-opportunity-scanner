@@ -6,6 +6,7 @@ import { VersionCompare } from "./intake/version-compare";
 import { MemberAdministration } from "./auth/member-administration";
 import { ScoringSettings } from "./portfolio/scoring-settings";
 import { BenefitTracker } from "./portfolio/benefit-tracker";
+import { CostTemplates } from "./portfolio/cost-templates";
 
 const refresh = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
@@ -229,6 +230,75 @@ describe("P1 collaboration and configuration features", () => {
     expect(
       screen.getByText(
         "Only owners, administrators, analysts, and reviewers can record actual benefits.",
+      ),
+    ).toBeVisible();
+  });
+
+  it("saves a cost template with normalized currency", async () => {
+    callScannerApi.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<CostTemplates editable templates={[]} />);
+
+    await user.type(screen.getByLabelText("Name"), "Operations team");
+    await user.type(screen.getByLabelText("Currency"), "thb");
+    await user.type(screen.getByLabelText("Loaded hourly cost"), "650");
+    await user.type(screen.getByLabelText("Monthly operating cost"), "1200");
+    await user.type(screen.getByLabelText("Implementation cost"), "25000");
+    await user.click(
+      screen.getByRole("button", { name: "Save cost template" }),
+    );
+
+    await waitFor(() =>
+      expect(callScannerApi).toHaveBeenCalledWith("POST", "cost-templates", {
+        name: "Operations team",
+        currency: "THB",
+        loaded_hourly_cost: 650,
+        monthly_operating_cost: 1200,
+        implementation_cost: 25000,
+      }),
+    );
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  it("shows a cost-template API error and prevents viewers from editing", async () => {
+    callScannerApi.mockResolvedValueOnce({
+      ok: false,
+      message: "A template with that name already exists",
+    });
+    const user = userEvent.setup();
+    const { rerender } = render(<CostTemplates editable templates={[]} />);
+
+    await user.type(screen.getByLabelText("Name"), "Operations team");
+    await user.type(screen.getByLabelText("Currency"), "THB");
+    await user.type(screen.getByLabelText("Loaded hourly cost"), "650");
+    await user.type(screen.getByLabelText("Monthly operating cost"), "1200");
+    await user.type(screen.getByLabelText("Implementation cost"), "25000");
+    await user.click(
+      screen.getByRole("button", { name: "Save cost template" }),
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "A template with that name already exists",
+    );
+
+    rerender(
+      <CostTemplates
+        editable={false}
+        templates={[
+          {
+            id: ID_A,
+            name: "Operations team",
+            currency: "THB",
+            loaded_hourly_cost: 650,
+            monthly_operating_cost: 1200,
+            implementation_cost: 25000,
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Operations team")).toBeVisible();
+    expect(
+      screen.getByText(
+        "Only owners and administrators can create cost templates.",
       ),
     ).toBeVisible();
   });
