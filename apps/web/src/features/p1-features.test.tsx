@@ -184,6 +184,55 @@ describe("P1 collaboration and configuration features", () => {
     expect(refresh).toHaveBeenCalled();
   });
 
+  it("validates and displays an error when recording actual benefits fails", async () => {
+    const user = userEvent.setup();
+    render(<BenefitTracker benefits={[]} editable opportunityId={ID_A} />);
+    fireEvent.change(screen.getByLabelText("Month"), {
+      target: { value: "2026-10" },
+    });
+    await user.click(
+      screen.getByRole("button", { name: "Record actual benefit" }),
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Record hours saved, monetary benefit, or both.",
+    );
+    await user.type(screen.getByLabelText("Actual monetary benefit"), "10");
+    callScannerApi.mockResolvedValueOnce({
+      ok: false,
+      message: "Duplicate month",
+    });
+    await user.click(
+      screen.getByRole("button", { name: "Record actual benefit" }),
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Duplicate month",
+    );
+  });
+
+  it("shows saved benefits and makes the tracker read-only when required", () => {
+    render(
+      <BenefitTracker
+        benefits={[
+          {
+            id: ID_B,
+            period: "2026-09",
+            hours_saved: 3,
+            monetary_benefit: null,
+            notes: null,
+          },
+        ]}
+        editable={false}
+        opportunityId={ID_A}
+      />,
+    );
+    expect(screen.getByText("2026-09")).toBeVisible();
+    expect(
+      screen.getByText(
+        "Only owners, administrators, analysts, and reviewers can record actual benefits.",
+      ),
+    ).toBeVisible();
+  });
+
   it("adds an account to the organization and changes its role", async () => {
     callScannerApi.mockResolvedValue({ ok: true });
     const user = userEvent.setup();
@@ -223,6 +272,20 @@ describe("P1 collaboration and configuration features", () => {
         `organization-members/${ID_B}`,
         { role: "reviewer" },
       ),
+    );
+  });
+
+  it("shows an organization-member API error", async () => {
+    callScannerApi.mockResolvedValueOnce({
+      ok: false,
+      message: "Account not found",
+    });
+    const user = userEvent.setup();
+    render(<MemberAdministration members={[]} />);
+    await user.type(screen.getByLabelText("Account email"), "nope@corp.test");
+    await user.click(screen.getByRole("button", { name: "Add member" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Account not found",
     );
   });
 });
